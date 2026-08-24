@@ -1,0 +1,66 @@
+# Gradle
+.gradle
+**/build/
+!src/**/build/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Kotlin
+.kotlin
+*.hprof
+
+# IDE
+*.iml
+.idea
+*.iws
+*.ipr
+out/
+.fleet
+
+# Android
+local.properties
+captures
+.externalNativeBuild
+.cxx
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+release/
+
+# Assinatura Android (nunca versionar)
+*.jks
+*.keystore
+keystore.properties
+
+# iOS / Xcode
+xcuserdata
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+**/xcshareddata/WorkspaceSettings.xcsettings
+DerivedData/
+*.xcuserstate
+Pods/
+*.moved-aside
+
+# Node (caso haja tooling web)
+node_modules/
+
+# Segredos e ambiente
+.env
+.env.*
+!.env.example
+*.pem
+google-services.json
+GoogleService-Info.plist
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
