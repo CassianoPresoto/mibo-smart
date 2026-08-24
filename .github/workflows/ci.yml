@@ -17,23 +17,23 @@ jobs:
     name: shared
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Configurar JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'zulu'
 
       - name: Configurar Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Testes commonTest + androidHostTest
         run: ./gradlew :shared:testAndroidHostTest --stacktrace
 
       - name: Publicar relatorios de teste
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: shared-test-reports
           path: shared/build/reports/tests/
@@ -43,16 +43,16 @@ jobs:
     name: androidApp
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Configurar JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'zulu'
 
       - name: Configurar Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Build debug
         run: ./gradlew :androidApp:assembleDebug --stacktrace
@@ -65,7 +65,7 @@ jobs:
 
       - name: Publicar relatorios
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: androidApp-reports
           path: androidApp/build/reports/
@@ -75,16 +75,16 @@ jobs:
     name: iosApp
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Configurar JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'zulu'
 
       - name: Configurar Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Testes unitarios iOS
         run: ./gradlew :shared:iosSimulatorArm64Test --stacktrace
@@ -105,7 +105,7 @@ jobs:
 
       - name: Publicar relatorios de teste
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: iosApp-test-reports
           path: shared/build/reports/tests/
