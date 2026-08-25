@@ -105,6 +105,30 @@ class SmartHomeApiCallerTest {
     }
 
     @Test
+    fun `an unauthorized envelope arriving with http 200 is still unauthorized`() = runTest {
+        val failure = assertFailsWith<SmartHomeUnauthorizedException> {
+            call(HttpStatusCode.OK, """{"statusCode":401,"body":"Não autorizado"}""")
+        }
+
+        assertEquals(true, failure.message?.contains("Não autorizado"))
+    }
+
+    @Test
+    fun `an invalid request reported inside a http 200 envelope is still invalid`() = runTest {
+        assertFailsWith<SmartHomeInvalidRequestException> {
+            call(
+                HttpStatusCode.OK,
+                """{"statusCode":400,"body":{"status":"erro","msg":"Parâmetro inválido"}}""",
+            )
+        }
+    }
+
+    @Test
+    fun `a successful envelope reporting status 200 is not treated as a failure`() = runTest {
+        call(HttpStatusCode.OK, """{"statusCode":200,"body":{"status":"sucesso"}}""")
+    }
+
+    @Test
     fun `maps other server failures to a server exception`() = runTest {
         assertFailsWith<SmartHomeServerException> {
             call(HttpStatusCode.ServiceUnavailable, """{"msg":"Serviço indisponível"}""")
