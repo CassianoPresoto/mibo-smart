@@ -2,11 +2,18 @@ package intelbras.mobi.smart.ui.video
 
 import dev.mokkery.answering.returns
 import dev.mokkery.every
+import dev.mokkery.everySuspend
 import dev.mokkery.matcher.any
 import dev.mokkery.mock
 import dev.mokkery.verify
+import dev.mokkery.verify.VerifyMode
 import dev.mokkery.verify.VerifyMode.Companion.exhaustiveOrder
+import dev.mokkery.verifySuspend
+import intelbras.mobi.smart.business.StreamingMonitor
 import intelbras.mobi.smart.business.VideoPlayback
+import intelbras.mobi.smart.business.usecase.LiveVideoSession
+import intelbras.mobi.smart.business.usecase.StreamingUsage
+import intelbras.mobi.smart.business.usecase.StreamingUsageResult
 import intelbras.mobi.smart.business.usecase.VideoPlaybackFailure
 import intelbras.mobi.smart.business.usecase.VideoPlaybackState
 import intelbras.mobi.smart.domain.device.model.DeviceReference
@@ -31,6 +38,16 @@ class LiveVideoViewModelTest {
     private val camera = DeviceReference(serialNumber = "KAYK0109140D9", productId = "iM3-C")
     private val player = mock<VideoPlayer>()
 
+    private val session = LiveVideoSession(
+        streamUrl = "https://open-casainteligente/stream/1",
+        sessionId = "session-1",
+        quotaGb = 1.0,
+    )
+
+    private val streamingMonitor = mock<StreamingMonitor> {
+        everySuspend { usageOf(any()) } returns StreamingUsageResult.Unavailable
+    }
+
     @BeforeTest
     fun setUp() = Dispatchers.setMain(testDispatcher)
 
@@ -39,7 +56,7 @@ class LiveVideoViewModelTest {
 
     @Test
     fun `waits for the connection as soon as the screen opens`() = runTest(testDispatcher) {
-        val viewModel = LiveVideoViewModel(playbackOf(VideoPlaybackState.Connecting))
+        val viewModel = viewModelWith(playbackOf(VideoPlaybackState.Connecting))
 
         viewModel.onScreenOpened(camera, player)
 
@@ -51,9 +68,9 @@ class LiveVideoViewModelTest {
         val playback = playbackOf(
             VideoPlaybackState.Connecting,
             VideoPlaybackState.Buffering,
-            VideoPlaybackState.Playing,
+            VideoPlaybackState.Playing(session),
         )
-        val viewModel = LiveVideoViewModel(playback)
+        val viewModel = LiveVideoViewModel(playback, streamingMonitor)
 
         viewModel.onScreenOpened(camera, player)
         testScheduler.advanceUntilIdle()
@@ -63,7 +80,7 @@ class LiveVideoViewModelTest {
 
     @Test
     fun `shows the attempt while the video reconnects`() = runTest(testDispatcher) {
-        val viewModel = LiveVideoViewModel(playbackOf(VideoPlaybackState.Reconnecting(2)))
+        val viewModel = viewModelWith(playbackOf(VideoPlaybackState.Reconnecting(2)))
 
         viewModel.onScreenOpened(camera, player)
         testScheduler.advanceUntilIdle()
@@ -103,8 +120,8 @@ class LiveVideoViewModelTest {
 
     @Test
     fun `retrying starts the playback again`() = runTest(testDispatcher) {
-        val playback = playbackOf(VideoPlaybackState.Playing)
-        val viewModel = LiveVideoViewModel(playback)
+        val playback = playbackOf(VideoPlaybackState.Playing(session))
+        val viewModel = LiveVideoViewModel(playback, streamingMonitor)
         viewModel.onScreenOpened(camera, player)
         testScheduler.advanceUntilIdle()
 
@@ -123,9 +140,9 @@ class LiveVideoViewModelTest {
         val playback = mock<VideoPlayback> {
             every { play(any(), any()) } returns states
         }
-        val viewModel = LiveVideoViewModel(playback)
+        val viewModel = LiveVideoViewModel(playback, streamingMonitor)
         viewModel.onScreenOpened(camera, player)
-        states.emit(VideoPlaybackState.Playing)
+        states.emit(VideoPlaybackState.Playing(session))
         testScheduler.advanceUntilIdle()
 
         viewModel.onScreenClosed()
@@ -135,12 +152,87 @@ class LiveVideoViewModelTest {
         assertEquals(LiveVideoUiState.Playing, viewModel.uiState.value)
     }
 
+    @Test
+    fun `keeps the details closed until someone asks for them`() = runTest(testDispatcher) {
+        val viewModel = viewModelWith(playbackOf(VideoPlaybackState.Playing(session)))
+        viewModel.onScreenOpened(camera, player)
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(false, viewModel.details.value.isExpanded)
+    }
+
+    @Test
+    fun `remembers the session of the video that is playing`() = runTest(testDispatcher) {
+        val viewModel = viewModelWith(playbackOf(VideoPlaybackState.Playing(session)))
+
+        viewModel.onScreenOpened(camera, player)
+        testScheduler.advanceUntilIdle()
+
+        val details = viewModel.details.value
+        assertEquals("session-1", details.sessionId)
+        assertEquals(1.0, details.quotaGb)
+    }
+
+    @Test
+    fun `opening the details reads how much the session consumed`() = runTest(testDispatcher) {
+        everySuspend { streamingMonitor.usageOf(any()) } returns StreamingUsageResult.Measured(
+            StreamingUsage(
+                consumedBytes = 5_242_880L,
+                remainingQuotaGb = 0.8,
+                isActive = true,
+                quotaExceeded = false,
+            ),
+        )
+        val viewModel = viewModelWith(playbackOf(VideoPlaybackState.Playing(session)))
+        viewModel.onScreenOpened(camera, player)
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onDetailsToggled()
+        testScheduler.advanceUntilIdle()
+
+        val details = viewModel.details.value
+        assertEquals(true, details.isExpanded)
+        assertEquals(LiveVideoUsage(5_242_880L, 0.8, isSessionActive = true), details.usage)
+        verifySuspend { streamingMonitor.usageOf("session-1") }
+    }
+
+    @Test
+    fun `the details survive a session the platform does not describe`() = runTest(testDispatcher) {
+        val viewModel = viewModelWith(playbackOf(VideoPlaybackState.Playing(session)))
+        viewModel.onScreenOpened(camera, player)
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onDetailsToggled()
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(null, viewModel.details.value.usage)
+        assertEquals(false, viewModel.details.value.isReadingUsage)
+    }
+
+    @Test
+    fun `closing the details asks nothing`() = runTest(testDispatcher) {
+        val viewModel = viewModelWith(playbackOf(VideoPlaybackState.Playing(session)))
+        viewModel.onScreenOpened(camera, player)
+        testScheduler.advanceUntilIdle()
+        viewModel.onDetailsToggled()
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onDetailsToggled()
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(false, viewModel.details.value.isExpanded)
+        verifySuspend(VerifyMode.exhaustive) { streamingMonitor.usageOf("session-1") }
+    }
+
     private fun viewModelFailingWith(failure: VideoPlaybackFailure): LiveVideoViewModel {
-        val viewModel = LiveVideoViewModel(playbackOf(VideoPlaybackState.Failed(failure)))
+        val viewModel = viewModelWith(playbackOf(VideoPlaybackState.Failed(failure)))
         viewModel.onScreenOpened(camera, player)
         testDispatcher.scheduler.advanceUntilIdle()
         return viewModel
     }
+
+    private fun viewModelWith(playback: VideoPlayback) =
+        LiveVideoViewModel(playback, streamingMonitor)
 
     private fun playbackOf(vararg states: VideoPlaybackState) = mock<VideoPlayback> {
         every { play(any(), any()) } returns flowOf(*states)

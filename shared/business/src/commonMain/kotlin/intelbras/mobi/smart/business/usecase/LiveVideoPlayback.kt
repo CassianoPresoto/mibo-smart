@@ -37,7 +37,7 @@ internal class LiveVideoPlayback(
                 val session = connection?.session ?: return@flow
                 val source = PlaybackSource.LiveVideo(session.streamUrl)
 
-                val failure = playUntilItStops(player, source)
+                val failure = playUntilItStops(player, source, session)
                 if (failure == null) {
                     emit(VideoPlaybackState.Ended)
                     return@flow
@@ -79,19 +79,23 @@ internal class LiveVideoPlayback(
     private suspend fun FlowCollector<VideoPlaybackState>.playUntilItStops(
         player: VideoPlayer,
         source: PlaybackSource,
+        session: LiveVideoSession,
     ): PlaybackFailure? {
         val lastEvent = player.events
             .onStart { player.start(source) }
-            .onEach { event -> emitProgressOf(event) }
+            .onEach { event -> emitProgressOf(event, session) }
             .firstOrNull { event -> event.stopsThePlayback() }
 
         return (lastEvent as? VideoPlayerEvent.Failed)?.failure
     }
 
-    private suspend fun FlowCollector<VideoPlaybackState>.emitProgressOf(event: VideoPlayerEvent) {
+    private suspend fun FlowCollector<VideoPlaybackState>.emitProgressOf(
+        event: VideoPlayerEvent,
+        session: LiveVideoSession,
+    ) {
         when (event) {
             VideoPlayerEvent.Buffering -> emit(VideoPlaybackState.Buffering)
-            VideoPlayerEvent.Playing -> emit(VideoPlaybackState.Playing)
+            VideoPlayerEvent.Playing -> emit(VideoPlaybackState.Playing(session))
             VideoPlayerEvent.Ended, is VideoPlayerEvent.Failed -> Unit
         }
     }
