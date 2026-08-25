@@ -9,6 +9,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.intOrNull
 
 internal class EnvelopeReader(private val json: Json) {
 
@@ -26,9 +27,15 @@ internal class EnvelopeReader(private val json: Json) {
     }
 
     fun messageIn(payload: String): String {
-        val body = bodyOf(payload) ?: return ""
+        val root = rootOf(payload) ?: return ""
+        (root[BODY_FIELD] as? JsonPrimitive)?.contentOrNull?.let { return it }
+
+        val body = root[BODY_FIELD] as? JsonObject ?: root
         return body.text(MESSAGE_FIELD) ?: body.text(ALTERNATIVE_MESSAGE_FIELD).orEmpty()
     }
+
+    fun reportedStatusIn(payload: String): Int? =
+        (rootOf(payload)?.get(STATUS_CODE_FIELD) as? JsonPrimitive)?.intOrNull
 
     private fun <T> decode(data: JsonElement, deserializer: DeserializationStrategy<T>): T = try {
         json.decodeFromJsonElement(deserializer, data)
@@ -40,10 +47,12 @@ internal class EnvelopeReader(private val json: Json) {
     }
 
     private fun bodyOf(payload: String): JsonObject? {
-        val root = runCatching { json.parseToJsonElement(payload) }.getOrNull() as? JsonObject
-            ?: return null
+        val root = rootOf(payload) ?: return null
         return root[BODY_FIELD] as? JsonObject ?: root
     }
+
+    private fun rootOf(payload: String): JsonObject? =
+        runCatching { json.parseToJsonElement(payload) }.getOrNull() as? JsonObject
 
     private fun failOnRejection(body: JsonObject) {
         val status = body.text(STATUS_FIELD) ?: return
@@ -65,6 +74,7 @@ internal class EnvelopeReader(private val json: Json) {
 
     private companion object {
         const val BODY_FIELD = "body"
+        const val STATUS_CODE_FIELD = "statusCode"
         const val DATA_FIELD = "data"
         const val STATUS_FIELD = "status"
         const val MESSAGE_FIELD = "msg"

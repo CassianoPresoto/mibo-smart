@@ -80,11 +80,11 @@ internal class SmartHomeApiCaller(
     }
 
     private fun ensureSuccess(
-        status: Int,
+        httpStatus: Int,
         payload: String,
         onEndpointError: PlatformErrorHandler,
     ) {
-        if (status in SUCCESS_RANGE) return
+        val status = failingStatusIn(httpStatus, payload) ?: return
 
         val message = envelopeReader.messageIn(payload)
         onEndpointError(status, message)
@@ -101,6 +101,13 @@ internal class SmartHomeApiCaller(
             status >= SERVER_ERROR -> SmartHomeServerException(describe(status, message))
             else -> SmartHomeUnexpectedResponseException(describe(status, message))
         }
+    }
+
+    private fun failingStatusIn(httpStatus: Int, payload: String): Int? {
+        if (httpStatus !in SUCCESS_RANGE) return httpStatus
+
+        val reportedStatus = envelopeReader.reportedStatusIn(payload) ?: return null
+        return reportedStatus.takeIf { it !in SUCCESS_RANGE }
     }
 
     private fun describe(status: Int, message: String): String =
