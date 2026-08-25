@@ -69,7 +69,21 @@ Casos de uso e guarda do token de acesso em memória, em `business/usecase`: o c
 (`ListDevices`), o resultado daquela intenção (`DeviceListResult`) e a implementação
 (`DeviceListing`) ficam juntos. Hoje: autenticar com token (valida chamando a listagem com uma
 página mínima e descarta o token se a plataforma recusar), listar dispositivos (com filtro de
-origem e paginação saneada) e encerrar sessão.
+origem e paginação saneada), conectar a um dispositivo e encerrar sessão.
+
+Conectar é genérico: `DeviceConnecting` pergunta as funções do aparelho (`/produtos/funcoes/v1`) e
+só abre o fluxo de vídeo quando ele anuncia streaming ao vivo (`RTSV*`); o que ele devolve é um
+`DeviceConnection` fechado, hoje com `LiveVideo`, amanhã com o ramo da fechadura. `ConnectionTermination`
+faz o caminho de volta pelo mesmo tipo — para o vídeo, encerrando a sessão de streaming para liberar a
+cota de 1 GB.
+
+A regra de reprodução também mora aqui, não no player: `LiveVideoPlayback` conecta, entrega a fonte ao
+player pelo contrato `VideoPlayer` (do domínio, implementado por ExoPlayer no Android e pelo player do
+sistema no iOS) e devolve um `Flow<VideoPlaybackState>`. Quando o vídeo cai, `PlaybackRetryPolicy`
+decide: falha de decodificação não tem retry; queda de rede ou fim de fluxo tenta de novo, a primeira
+tentativa recarregando a mesma URL e as seguintes abrindo uma conexão nova, com espera crescente entre
+elas. Ao sair, o player é parado e a sessão de streaming encerrada, mesmo quando a tela foi fechada no
+meio.
 
 ## Rodando
 

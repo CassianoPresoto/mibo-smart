@@ -2,10 +2,18 @@ package intelbras.mobi.smart.business.di
 
 import intelbras.mobi.smart.business.DeviceCatalog
 import intelbras.mobi.smart.business.DeviceCatalogImpl
+import intelbras.mobi.smart.business.DeviceConnector
+import intelbras.mobi.smart.business.DeviceConnectorImpl
 import intelbras.mobi.smart.business.SmartHomeSession
 import intelbras.mobi.smart.business.SmartHomeSessionImpl
+import intelbras.mobi.smart.business.VideoPlayback
+import intelbras.mobi.smart.business.VideoPlaybackImpl
 import intelbras.mobi.smart.business.session.StoredAccessTokenProvider
+import intelbras.mobi.smart.business.usecase.ConnectionTermination
+import intelbras.mobi.smart.business.usecase.DeviceConnecting
 import intelbras.mobi.smart.business.usecase.DeviceListing
+import intelbras.mobi.smart.business.usecase.LiveVideoPlayback
+import intelbras.mobi.smart.business.usecase.PlaybackRetryPolicy
 import intelbras.mobi.smart.business.usecase.SessionInspection
 import intelbras.mobi.smart.business.usecase.SessionTermination
 import intelbras.mobi.smart.business.usecase.TokenAuthentication
@@ -28,13 +36,19 @@ fun businessModule(
     )
 
     single<Clock> { Clock.System }
+    single { PlaybackRetryPolicy() }
     single<AccessTokenProvider> { StoredAccessTokenProvider(get(), get()) }
 
+    factory { ConnectionTermination(get()) }
+    factory { DeviceConnecting(get(), get()) }
     factory { DeviceListing(get()) }
+    factory { LiveVideoPlayback(get(), get()) }
     factory { SessionInspection(get(), get()) }
     factory { SessionTermination(get()) }
     factory { TokenAuthentication(get(), get(), get()) }
 
     single<DeviceCatalog> { DeviceCatalogImpl(get()) }
+    single<DeviceConnector> { DeviceConnectorImpl(get(), get()) }
     single<SmartHomeSession> { SmartHomeSessionImpl(get(), get(), get()) }
+    single<VideoPlayback> { VideoPlaybackImpl(get()) }
 }
