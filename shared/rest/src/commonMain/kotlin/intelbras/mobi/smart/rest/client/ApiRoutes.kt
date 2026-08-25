@@ -9,4 +9,6 @@ internal object ApiRoutes {
     const val DEVICE_BATTERY = "/produtos/bateria/v1"
     const val RENAME_DEVICE = "/produtos/mudar-nome/v1"
     const val UPDATE_DEVICE = "/produtos/atualizar-dispositivo/v1"
+
+    const val RENEW_TOKEN = "/autenticacao/renovarToken"
 }
