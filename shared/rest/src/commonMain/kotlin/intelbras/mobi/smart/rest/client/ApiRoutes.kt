@@ -11,4 +11,7 @@ internal object ApiRoutes {
     const val UPDATE_DEVICE = "/produtos/atualizar-dispositivo/v1"
 
     const val RENEW_TOKEN = "/autenticacao/renovarToken"
+
+    const val CREATE_VIDEO_STREAM = "/cameras/criar-fluxo-video/v1"
+    const val RECORDING = "/cameras/gravacao/v1"
 }
