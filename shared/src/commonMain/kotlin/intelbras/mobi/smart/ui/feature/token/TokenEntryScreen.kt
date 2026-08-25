@@ -1,23 +1,20 @@
 package intelbras.mobi.smart.ui.feature.token
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,12 +27,20 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Text
+import intelbras.mobi.smart.ui.component.MiboPrimaryButton
+import intelbras.mobi.smart.ui.component.MiboTextField
+import intelbras.mobi.smart.ui.component.MiboWordmark
+import intelbras.mobi.smart.ui.theme.MiboSmartSize
+import intelbras.mobi.smart.ui.theme.MiboTheme
 import mibosmart.shared.generated.resources.Res
 import mibosmart.shared.generated.resources.app_name
 import mibosmart.shared.generated.resources.token_entry_hide
 import mibosmart.shared.generated.resources.token_entry_label
+import mibosmart.shared.generated.resources.token_entry_session_hint
 import mibosmart.shared.generated.resources.token_entry_show
 import mibosmart.shared.generated.resources.token_entry_submit
 import mibosmart.shared.generated.resources.token_entry_submitting
@@ -51,51 +56,53 @@ internal fun TokenEntryScreen(
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val colors = MiboTheme.colors
+    val typography = MiboTheme.typography
+
+    var isTokenVisible by rememberSaveable { mutableStateOf(false) }
+    val failure = uiState.failureToShow(sessionExpired)
+
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(colors.background)
             .safeContentPadding()
+            .imePadding()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 32.dp),
+            .padding(horizontal = MiboSmartSize.screenPadding, vertical = 32.dp),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.Start,
     ) {
-        Text(
-            text = stringResource(Res.string.app_name),
-            style = MaterialTheme.typography.headlineMedium,
-        )
-        Spacer(Modifier.height(8.dp))
+        MiboWordmark(name = stringResource(Res.string.app_name))
+
+        Spacer(Modifier.height(34.dp))
         Text(
             text = stringResource(Res.string.token_entry_subtitle),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = typography.body,
+            color = colors.muted,
+            modifier = Modifier.widthIn(max = 300.dp),
         )
-        Spacer(Modifier.height(24.dp))
 
-        var isTokenVisible by rememberSaveable { mutableStateOf(false) }
-        val failure = uiState.failureToShow(sessionExpired)
+        Spacer(Modifier.height(26.dp))
+        Text(
+            text = stringResource(Res.string.token_entry_label).uppercase(),
+            style = typography.label,
+            color = colors.muted,
+        )
 
-        OutlinedTextField(
+        Spacer(Modifier.height(8.dp))
+        MiboTextField(
             value = uiState.token,
             onValueChange = onTokenChanged,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(stringResource(Res.string.token_entry_label)) },
-            supportingText = { Text(stringResource(Res.string.token_entry_where_to_find)) },
-            isError = failure != null,
-            singleLine = true,
             enabled = !uiState.isSubmitting,
+            isError = failure != null,
+            trailingLabel = stringResource(visibilityLabel(isTokenVisible)),
+            onTrailingClick = { isTokenVisible = !isTokenVisible },
+            trailingEnabled = uiState.token.isNotEmpty(),
             visualTransformation = if (isTokenVisible) {
                 VisualTransformation.None
             } else {
                 PasswordVisualTransformation()
-            },
-            trailingIcon = {
-                TextButton(
-                    onClick = { isTokenVisible = !isTokenVisible },
-                    enabled = uiState.token.isNotEmpty(),
-                ) {
-                    Text(stringResource(visibilityLabel(isTokenVisible)))
-                }
             },
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.None,
@@ -107,23 +114,37 @@ internal fun TokenEntryScreen(
         )
 
         failure?.let { shown ->
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
             Text(
                 text = stringResource(shown.messageResource()),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.fillMaxWidth(),
+                style = typography.caption,
+                color = colors.danger,
             )
         }
 
-        Spacer(Modifier.height(24.dp))
-        Button(
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = stringResource(Res.string.token_entry_where_to_find),
+            style = typography.caption,
+            color = colors.muted,
+        )
+
+        Spacer(Modifier.height(26.dp))
+        MiboPrimaryButton(
+            text = stringResource(submitLabel(uiState.isSubmitting)),
             onClick = onSubmit,
-            modifier = Modifier.fillMaxWidth(),
             enabled = uiState.canSubmit,
-        ) {
-            Text(stringResource(submitLabel(uiState.isSubmitting)))
-        }
+            loading = uiState.isSubmitting,
+        )
+
+        Spacer(Modifier.height(18.dp))
+        Text(
+            text = stringResource(Res.string.token_entry_session_hint),
+            style = typography.caption,
+            color = colors.muted,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
@@ -140,6 +161,15 @@ private fun submitLabel(isSubmitting: Boolean) =
 @Composable
 private fun TokenEntryScreenPreview() {
     PreviewScreen(uiState = TokenEntryUiState(), sessionExpired = false)
+}
+
+@Preview
+@Composable
+private fun TokenEntryScreenFilledPreview() {
+    PreviewScreen(
+        uiState = TokenEntryUiState(token = "Ot_0001or1c98d0"),
+        sessionExpired = false,
+    )
 }
 
 @Preview
@@ -171,14 +201,12 @@ private fun TokenEntryScreenRefusedPreview() {
 
 @Composable
 private fun PreviewScreen(uiState: TokenEntryUiState, sessionExpired: Boolean) {
-    MaterialTheme {
-        Surface {
-            TokenEntryScreen(
-                uiState = uiState,
-                sessionExpired = sessionExpired,
-                onTokenChanged = {},
-                onSubmit = {},
-            )
-        }
+    MiboTheme {
+        TokenEntryScreen(
+            uiState = uiState,
+            sessionExpired = sessionExpired,
+            onTokenChanged = {},
+            onSubmit = {},
+        )
     }
 }
