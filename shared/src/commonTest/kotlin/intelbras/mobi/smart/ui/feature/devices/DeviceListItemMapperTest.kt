@@ -45,10 +45,29 @@ class DeviceListItemMapperTest {
     }
 
     @Test
-    fun `only a camera has a screen of its own today`() {
+    fun `camera and lock have a screen of their own`() {
         assertTrue(device(kind = DeviceKind.Camera).toListItem().hasScreenOfItsOwn)
-        assertFalse(device(kind = DeviceKind.Lock).toListItem().hasScreenOfItsOwn)
+        assertTrue(device(kind = DeviceKind.Lock).toListItem().hasScreenOfItsOwn)
+    }
+
+    @Test
+    fun `a hub and an unknown device have nowhere to go`() {
+        assertFalse(device(kind = DeviceKind.Hub).toListItem().hasScreenOfItsOwn)
         assertFalse(device(kind = DeviceKind.Unknown).toListItem().hasScreenOfItsOwn)
+    }
+
+    @Test
+    fun `a subdevice carries the address the platform expects`() {
+        val item = device(
+            serialNumber = "08B95FFFFE02116A",
+            productId = "3Y2FSCDJ",
+            kind = DeviceKind.Lock,
+            hubSerialNumber = "OGQ0010782013",
+            hubProductId = "sqNzDUSq",
+        ).toListItem()
+
+        assertEquals("08B95FFFFE02116A", item.serialNumber)
+        assertEquals("08B95FFFFE02116A_OGQ0010782013_sqNzDUSq", item.address)
     }
 
     @Test

@@ -12,6 +12,8 @@ internal fun device(
     model: String = "iM3-C",
     status: DeviceStatus = DeviceStatus.Online,
     kind: DeviceKind = DeviceKind.Camera,
+    hubSerialNumber: String = "",
+    hubProductId: String = "",
 ) = CatalogDevice(
     device = Device(
         serialNumber = serialNumber,
@@ -19,6 +21,9 @@ internal fun device(
         model = model,
         status = status,
         productId = productId,
+        isSubdevice = hubSerialNumber.isNotBlank(),
+        hubSerialNumber = hubSerialNumber,
+        hubProductId = hubProductId,
     ),
     kind = kind,
 )

@@ -14,10 +14,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import intelbras.mobi.smart.domain.device.model.DeviceKind
 import intelbras.mobi.smart.domain.device.model.DeviceReference
 import intelbras.mobi.smart.ui.feature.devices.DeviceListItem
 import intelbras.mobi.smart.ui.feature.devices.DeviceListRoute as DeviceListDestination
 import intelbras.mobi.smart.ui.feature.session.SessionCheckRoute as SessionCheckDestination
+import intelbras.mobi.smart.ui.feature.lock.LockRoute as LockDestination
 import intelbras.mobi.smart.ui.feature.session.SessionViewModel
 import intelbras.mobi.smart.ui.feature.token.TokenEntryRoute as TokenEntryDestination
 import intelbras.mobi.smart.ui.feature.video.LiveVideoRoute as LiveVideoDestination
@@ -62,7 +64,9 @@ internal fun AppNavHost(
 
         composable<DeviceListRoute> {
             DeviceListDestination(
-                onDeviceSelected = { device -> navController.navigate(device.toRoute()) },
+                onDeviceSelected = { device ->
+                    device.destination()?.let { destination -> navController.navigate(destination) }
+                },
                 onSignOut = {
                     sessionViewModel.onSignOut()
                     navController.navigate(TokenEntryRoute()) {
@@ -75,12 +79,19 @@ internal fun AppNavHost(
         composable<LiveVideoRoute> { entry ->
             val route = entry.toRoute<LiveVideoRoute>()
             LiveVideoDestination(
-                device = DeviceReference(
-                    serialNumber = route.serialNumber,
-                    productId = route.productId,
-                ),
+                device = route.reference(),
                 deviceName = route.name,
                 deviceModel = route.model,
+                onLeave = { navController.popBackStack() },
+            )
+        }
+
+        composable<LockRoute> { entry ->
+            val route = entry.toRoute<LockRoute>()
+            LockDestination(
+                lock = route.reference(),
+                lockName = route.name,
+                lockModel = route.model,
                 onLeave = { navController.popBackStack() },
             )
         }
@@ -93,9 +104,13 @@ private fun NavHostController.openDeviceList(from: Any) {
     }
 }
 
-private fun DeviceListItem.toRoute() = LiveVideoRoute(
-    serialNumber = serialNumber,
-    productId = productId,
-    name = name,
-    model = model,
-)
+private fun DeviceListItem.destination(): Any? = when (kind) {
+    DeviceKind.Camera -> LiveVideoRoute(address, productId, name, model)
+    DeviceKind.Lock -> LockRoute(address, productId, name, model)
+    DeviceKind.Hub, DeviceKind.Unknown -> null
+}
+
+private fun LiveVideoRoute.reference() =
+    DeviceReference(serialNumber = address, productId = productId)
+
+private fun LockRoute.reference() = DeviceReference(serialNumber = address, productId = productId)

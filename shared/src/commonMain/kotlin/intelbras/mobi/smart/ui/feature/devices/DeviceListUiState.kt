@@ -14,13 +14,15 @@ sealed interface DeviceListUiState {
 
 data class DeviceListItem(
     val serialNumber: String,
+    val address: String,
     val productId: String,
     val name: String,
     val model: String,
     val isOnline: Boolean,
     val kind: DeviceKind,
 ) {
-    val hasScreenOfItsOwn: Boolean get() = kind == DeviceKind.Camera
+    val hasScreenOfItsOwn: Boolean
+        get() = kind == DeviceKind.Camera || kind == DeviceKind.Lock
 }
 
 sealed interface DeviceListFailure {

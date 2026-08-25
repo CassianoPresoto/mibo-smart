@@ -4,6 +4,7 @@ import intelbras.mobi.smart.business.usecase.CatalogDevice
 
 internal fun CatalogDevice.toListItem(): DeviceListItem = DeviceListItem(
     serialNumber = device.serialNumber,
+    address = device.address,
     productId = device.productId,
     name = device.name.ifBlank { device.model }.ifBlank { device.serialNumber },
     model = device.model,

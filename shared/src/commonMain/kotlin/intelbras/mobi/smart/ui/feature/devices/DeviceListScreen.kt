@@ -273,6 +273,7 @@ private fun previewDevice(
     isOnline: Boolean = true,
 ) = DeviceListItem(
     serialNumber = serialNumber,
+    address = serialNumber,
     productId = "",
     name = name,
     model = model,

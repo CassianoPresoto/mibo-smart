@@ -76,4 +76,21 @@
     <string name="live_video_failure_network">Sem conexão com a plataforma. Verifique a internet e tente de novo.</string>
     <string name="live_video_failure_interrupted">O vídeo foi interrompido e não voltou. Tente de novo.</string>
     <string name="live_video_failure_unexpected">Não foi possível abrir o vídeo agora. Tente novamente em instantes.</string>
+    <string name="lock_back">Voltar</string>
+    <string name="lock_status_title">Status da fechadura</string>
+    <string name="lock_status_checking">Verificando…</string>
+    <string name="lock_status_open">Aberta</string>
+    <string name="lock_status_closed">Fechada</string>
+    <string name="lock_status_unknown">Não foi possível saber</string>
+    <string name="lock_open">Abrir</string>
+    <string name="lock_close">Fechar</string>
+    <string name="lock_retry">Tentar de novo</string>
+    <string name="lock_switching">Enviando o comando e esperando a fechadura responder…</string>
+    <string name="lock_awaiting_confirmation">A fechadura recebeu o comando mas ainda não confirmou a mudança.</string>
+
+    <string name="lock_failure_offline">A fechadura está offline. Verifique se a central está ligada e conectada.</string>
+    <string name="lock_failure_refused">A plataforma recusou o comando. Tente de novo em instantes.</string>
+    <string name="lock_failure_session_expired">Sua sessão expirou. Saia e cole um token novo para continuar.</string>
+    <string name="lock_failure_network">Sem conexão com a plataforma. Verifique a internet e tente de novo.</string>
+    <string name="lock_failure_unexpected">Não foi possível falar com a fechadura agora. Tente novamente em instantes.</string>
 </resources>
