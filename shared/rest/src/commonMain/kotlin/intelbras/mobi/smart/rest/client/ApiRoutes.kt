@@ -19,4 +19,17 @@ internal object ApiRoutes {
     const val MY_SESSIONS = "/streaming/minhas-sessoes/v1"
     const val SESSION_INFO = "/streaming/sessao-info/v1"
     const val END_SESSION = "/streaming/encerrar-sessao/v1"
+
+    const val LOCK_OPENING_STATUS = "/fechaduras/status-abertura/v1"
+    const val LOCK_CONTROL = "/fechaduras/controle-fechadura/v1"
+    const val LOCK_VOLUME = "/fechaduras/volume/v1"
+    const val LOCK_CHANGE_VOLUME = "/fechaduras/mudar-volume/v1"
+    const val LOCK_OPENING_HISTORY = "/fechaduras/historico-abertura/v1"
+    const val LOCK_REMOTE_OPENING_STATUS = "/fechaduras/status-abrir-remoto/v1"
+    const val LOCK_ENABLE_REMOTE_OPENING = "/fechaduras/habilitar-abrir-remoto/v1"
+    const val LOCK_CREATE_SINGLE_PASSWORD = "/fechaduras/criar-senha-unica/v1"
+    const val LOCK_CREATE_PERIODIC_PASSWORD = "/fechaduras/criar-senha-periodica/v1"
+    const val LOCK_CREATE_DYNAMIC_PASSWORD = "/fechaduras/criar-senha-dinamica/v1"
+    const val LOCK_DELETE_SINGLE_PASSWORD = "/fechaduras/deletar-senha-unica/v1"
+    const val LOCK_DELETE_PERIODIC_PASSWORD = "/fechaduras/deletar-senha-periodica/v1"
 }
