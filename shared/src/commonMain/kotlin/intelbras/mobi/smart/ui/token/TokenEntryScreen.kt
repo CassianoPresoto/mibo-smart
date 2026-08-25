@@ -16,10 +16,19 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -47,6 +56,8 @@ internal fun TokenEntryScreen(
         )
         Spacer(Modifier.height(24.dp))
 
+        var isTokenVisible by rememberSaveable { mutableStateOf(false) }
+
         OutlinedTextField(
             value = uiState.token,
             onValueChange = onTokenChanged,
@@ -54,10 +65,29 @@ internal fun TokenEntryScreen(
             label = { Text(TokenEntryTexts.TOKEN_LABEL) },
             supportingText = { Text(TokenEntryTexts.WHERE_TO_FIND) },
             isError = uiState.failure != null,
-            singleLine = false,
-            maxLines = 3,
+            singleLine = true,
             enabled = !uiState.isSubmitting,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
+            visualTransformation = if (isTokenVisible) {
+                VisualTransformation.None
+            } else {
+                PasswordVisualTransformation()
+            },
+            trailingIcon = {
+                TextButton(
+                    onClick = { isTokenVisible = !isTokenVisible },
+                    enabled = uiState.token.isNotEmpty(),
+                ) {
+                    Text(
+                        if (isTokenVisible) TokenEntryTexts.HIDE_TOKEN else TokenEntryTexts.SHOW_TOKEN
+                    )
+                }
+            },
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.None,
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Go,
+            ),
             keyboardActions = KeyboardActions(onGo = { onSubmit() }),
         )
 
