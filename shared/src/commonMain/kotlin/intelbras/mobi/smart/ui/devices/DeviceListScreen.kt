@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import mibosmart.shared.generated.resources.Res
 import mibosmart.shared.generated.resources.device_list_empty_message
+import mibosmart.shared.generated.resources.device_list_no_action
 import mibosmart.shared.generated.resources.device_list_empty_title
 import mibosmart.shared.generated.resources.device_list_loading
 import mibosmart.shared.generated.resources.device_list_reload
@@ -132,6 +133,7 @@ private fun DeviceRows(
 private fun DeviceRow(device: DeviceListItem, onDeviceSelected: (DeviceListItem) -> Unit) {
     Card(
         onClick = { onDeviceSelected(device) },
+        enabled = device.hasScreenOfItsOwn,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
@@ -142,6 +144,11 @@ private fun DeviceRow(device: DeviceListItem, onDeviceSelected: (DeviceListItem)
                 Text(text = device.name, style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(4.dp))
                 Text(
+                    text = stringResource(device.kind.labelResource()),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
                     text = device.model,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -151,6 +158,14 @@ private fun DeviceRow(device: DeviceListItem, onDeviceSelected: (DeviceListItem)
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                if (!device.hasScreenOfItsOwn) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(Res.string.device_list_no_action),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
             Text(
                 text = stringResource(statusLabel(device.isOnline)),

@@ -20,6 +20,7 @@ import intelbras.mobi.smart.rest.SmartHomeQuotaExceededException
 import intelbras.mobi.smart.rest.SmartHomeServerException
 import intelbras.mobi.smart.rest.SmartHomeUnauthorizedException
 import kotlinx.coroutines.test.runTest
+import intelbras.mobi.smart.business.noLock
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -54,7 +55,7 @@ class DeviceConnectingTest {
         val deviceRepository = deviceRepositoryReturning("RTSV1")
         val cameraRepository = cameraRepositoryReturning(stream)
 
-        DeviceConnecting(deviceRepository, cameraRepository)(camera)
+        DeviceConnecting(DeviceKindResolution(deviceRepository, noLock()), cameraRepository)(camera)
 
         verifySuspend { deviceRepository.readCapabilities(DeviceSerial("KAYK0109140D9")) }
         verifySuspend {
@@ -74,7 +75,7 @@ class DeviceConnectingTest {
         val cameraRepository = mock<CameraRepository>()
         val deviceRepository = deviceRepositoryReturning("LocalRecord,AudioTalk")
 
-        val result = DeviceConnecting(deviceRepository, cameraRepository)(camera)
+        val result = DeviceConnecting(DeviceKindResolution(deviceRepository, noLock()), cameraRepository)(camera)
 
         assertEquals(DeviceConnectionResult.NotSupported, result)
         verifySuspend(not) { cameraRepository.openVideoStream(any()) }
@@ -130,7 +131,7 @@ class DeviceConnectingTest {
             everySuspend { readCapabilities(any()) } throws SmartHomeNetworkException()
         }
 
-        val result = DeviceConnecting(deviceRepository, mock<CameraRepository>())(camera)
+        val result = DeviceConnecting(DeviceKindResolution(deviceRepository, noLock()), mock<CameraRepository>())(camera)
 
         assertEquals(DeviceConnectionResult.NetworkUnavailable, result)
     }
@@ -139,11 +140,11 @@ class DeviceConnectingTest {
         val cameraRepository = mock<CameraRepository> {
             everySuspend { openVideoStream(any()) } throws failure
         }
-        return DeviceConnecting(deviceRepositoryReturning("RTSV1"), cameraRepository)(camera)
+        return DeviceConnecting(DeviceKindResolution(deviceRepositoryReturning("RTSV1"), noLock()), cameraRepository)(camera)
     }
 
     private fun connecting(capabilities: String) =
-        DeviceConnecting(deviceRepositoryReturning(capabilities), cameraRepositoryReturning(stream))
+        DeviceConnecting(DeviceKindResolution(deviceRepositoryReturning(capabilities), noLock()), cameraRepositoryReturning(stream))
 
     private fun deviceRepositoryReturning(capabilities: String) = mock<DeviceRepository> {
         everySuspend { readCapabilities(any()) } returns DeviceCapabilities(capabilities)

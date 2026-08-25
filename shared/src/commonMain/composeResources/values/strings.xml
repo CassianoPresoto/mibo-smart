@@ -24,6 +24,11 @@
     <string name="device_list_empty_message">Esta conta ainda não tem dispositivos vinculados ou compartilhados.</string>
     <string name="device_list_reload">Atualizar</string>
     <string name="device_list_retry">Tentar de novo</string>
+    <string name="device_kind_camera">Câmera</string>
+    <string name="device_kind_lock">Fechadura</string>
+    <string name="device_kind_hub">Central</string>
+    <string name="device_kind_unknown">Tipo não reconhecido</string>
+    <string name="device_list_no_action">Sem ação disponível ainda</string>
     <string name="device_status_online">Online</string>
     <string name="device_status_offline">Offline</string>
 

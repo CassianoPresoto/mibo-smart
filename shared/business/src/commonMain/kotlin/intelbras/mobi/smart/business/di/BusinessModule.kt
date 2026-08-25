@@ -11,6 +11,7 @@ import intelbras.mobi.smart.business.VideoPlaybackImpl
 import intelbras.mobi.smart.business.session.StoredAccessTokenProvider
 import intelbras.mobi.smart.business.usecase.ConnectionTermination
 import intelbras.mobi.smart.business.usecase.DeviceConnecting
+import intelbras.mobi.smart.business.usecase.DeviceKindResolution
 import intelbras.mobi.smart.business.usecase.DeviceListing
 import intelbras.mobi.smart.business.usecase.LiveVideoPlayback
 import intelbras.mobi.smart.business.usecase.PlaybackRetryPolicy
@@ -41,7 +42,8 @@ fun businessModule(
 
     factory { ConnectionTermination(get()) }
     factory { DeviceConnecting(get(), get()) }
-    factory { DeviceListing(get()) }
+    factory { DeviceKindResolution(get(), get()) }
+    factory { DeviceListing(get(), get()) }
     factory { LiveVideoPlayback(get(), get()) }
     factory { SessionInspection(get(), get()) }
     factory { SessionTermination(get()) }

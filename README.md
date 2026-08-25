@@ -71,6 +71,11 @@ Casos de uso e guarda do token de acesso em memória, em `business/usecase`: o c
 página mínima e descarta o token se a plataforma recusar), listar dispositivos (com filtro de
 origem e paginação saneada), conectar a um dispositivo e encerrar sessão.
 
+Cada dispositivo listado vem com o seu tipo: `DeviceKindResolution` pergunta as funções do aparelho e
+traduz para `DeviceKind` — hoje `Camera` (marcador `RTSV*`) ou `Unknown`. A listagem resolve os tipos em
+paralelo e não deixa uma consulta de funções que falhou derrubar a lista; o aparelho só aparece sem tipo.
+É o mesmo resolvedor que o connect usa, para não existirem duas respostas sobre o que um aparelho é.
+
 Conectar é genérico: `DeviceConnecting` pergunta as funções do aparelho (`/produtos/funcoes/v1`) e
 só abre o fluxo de vídeo quando ele anuncia streaming ao vivo (`RTSV*`); o que ele devolve é um
 `DeviceConnection` fechado, hoje com `LiveVideo`, amanhã com o ramo da fechadura. `ConnectionTermination`

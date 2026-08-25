@@ -2,14 +2,20 @@ package intelbras.mobi.smart.business.usecase
 
 import intelbras.mobi.smart.business.session.rejectsTheAccessToken
 import intelbras.mobi.smart.domain.device.DeviceRepository
+import intelbras.mobi.smart.domain.device.model.Device
+import intelbras.mobi.smart.domain.device.model.DeviceKind
 import intelbras.mobi.smart.domain.device.model.DeviceListPage
 import intelbras.mobi.smart.domain.device.model.DeviceListQuery
 import intelbras.mobi.smart.domain.device.model.DeviceOriginFilter
 import intelbras.mobi.smart.rest.SmartHomeNetworkException
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 internal class DeviceListing(
     private val deviceRepository: DeviceRepository,
+    private val deviceKindResolution: DeviceKindResolution,
 ) {
 
     suspend operator fun invoke(
@@ -31,12 +37,33 @@ internal class DeviceListing(
         }
     }
 
-    private fun DeviceListPage.toResult(): DeviceListResult =
+    private suspend fun DeviceListPage.toResult(): DeviceListResult =
         if (isEmpty && page == DeviceListQuery.FIRST_PAGE) {
             DeviceListResult.Empty
         } else {
-            DeviceListResult.Success(this)
+            DeviceListResult.Success(devices.withTheirKinds())
         }
+
+    private suspend fun List<Device>.withTheirKinds(): List<CatalogDevice> = coroutineScope {
+        val hubs = hubsOfThePage()
+        map { device -> async { device.toCatalogDevice(hubs) } }.awaitAll()
+    }
+
+    private fun List<Device>.hubsOfThePage(): Set<String> =
+        mapNotNull { device -> device.hubSerialNumber.ifBlank { null } }.toSet()
+
+    private suspend fun Device.toCatalogDevice(hubs: Set<String>) = CatalogDevice(
+        device = this,
+        kind = if (serialNumber in hubs) DeviceKind.Hub else kindOrUnknown(),
+    )
+
+    private suspend fun Device.kindOrUnknown(): DeviceKind = try {
+        deviceKindResolution(this)
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (unreadableCapabilities: Throwable) {
+        DeviceKind.Unknown
+    }
 
     private fun Throwable.toResult(): DeviceListResult = when {
         rejectsTheAccessToken() -> DeviceListResult.InvalidToken

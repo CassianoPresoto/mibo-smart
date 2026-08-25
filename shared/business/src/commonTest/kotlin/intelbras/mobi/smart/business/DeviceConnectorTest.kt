@@ -7,6 +7,7 @@ import dev.mokkery.mock
 import dev.mokkery.verifySuspend
 import intelbras.mobi.smart.business.usecase.ConnectionTermination
 import intelbras.mobi.smart.business.usecase.DeviceConnecting
+import intelbras.mobi.smart.business.usecase.DeviceKindResolution
 import intelbras.mobi.smart.business.usecase.DeviceConnection
 import intelbras.mobi.smart.business.usecase.DeviceConnectionResult
 import intelbras.mobi.smart.business.usecase.DisconnectionResult
@@ -41,7 +42,7 @@ class DeviceConnectorTest {
     }
 
     private val connector: DeviceConnector = DeviceConnectorImpl(
-        DeviceConnecting(deviceRepository, cameraRepository),
+        DeviceConnecting(DeviceKindResolution(deviceRepository, noLock()), cameraRepository),
         ConnectionTermination(streamingRepository),
     )
 
