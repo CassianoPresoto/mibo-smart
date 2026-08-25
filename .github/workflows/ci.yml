@@ -33,6 +33,7 @@ jobs:
           ./gradlew
           :shared:domain:testAndroidHostTest
           :shared:rest:testAndroidHostTest
+          :shared:persistence:testAndroidHostTest
           :shared:business:testAndroidHostTest
           :shared:testAndroidHostTest
           --stacktrace
@@ -97,7 +98,9 @@ jobs:
       - name: Testes unitarios iOS
         run: >
           ./gradlew
+          :shared:domain:iosSimulatorArm64Test
           :shared:rest:iosSimulatorArm64Test
+          :shared:persistence:iosSimulatorArm64Test
           :shared:business:iosSimulatorArm64Test
           :shared:iosSimulatorArm64Test
           --stacktrace

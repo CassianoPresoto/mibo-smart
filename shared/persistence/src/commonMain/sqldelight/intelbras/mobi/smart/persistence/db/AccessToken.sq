@@ -1,0 +1,16 @@
+CREATE TABLE accessTokenEntity (
+    id INTEGER NOT NULL PRIMARY KEY,
+    expiresAtEpochMilliseconds INTEGER NOT NULL
+);
+
+selectExpiration:
+SELECT expiresAtEpochMilliseconds
+FROM accessTokenEntity
+WHERE id = :id;
+
+replaceExpiration:
+INSERT OR REPLACE INTO accessTokenEntity(id, expiresAtEpochMilliseconds)
+VALUES (:id, :expiresAtEpochMilliseconds);
+
+deleteExpiration:
+DELETE FROM accessTokenEntity WHERE id = :id;

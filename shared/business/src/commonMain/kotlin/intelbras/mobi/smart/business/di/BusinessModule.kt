@@ -4,27 +4,37 @@ import intelbras.mobi.smart.business.DeviceCatalog
 import intelbras.mobi.smart.business.DeviceCatalogImpl
 import intelbras.mobi.smart.business.SmartHomeSession
 import intelbras.mobi.smart.business.SmartHomeSessionImpl
-import intelbras.mobi.smart.business.session.InMemoryAccessTokenStore
+import intelbras.mobi.smart.business.session.StoredAccessTokenProvider
 import intelbras.mobi.smart.business.usecase.DeviceListing
+import intelbras.mobi.smart.business.usecase.SessionInspection
 import intelbras.mobi.smart.business.usecase.SessionTermination
 import intelbras.mobi.smart.business.usecase.TokenAuthentication
 import intelbras.mobi.smart.domain.auth.AccessTokenProvider
-import intelbras.mobi.smart.domain.auth.AccessTokenStore
+import intelbras.mobi.smart.persistence.SmartHomePersistenceFactory
+import intelbras.mobi.smart.persistence.di.persistenceModule
 import intelbras.mobi.smart.rest.RestConfiguration
 import intelbras.mobi.smart.rest.di.restModule
+import kotlin.time.Clock
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-fun businessModule(logNetworkTraffic: Boolean = false): Module = module {
-    includes(restModule(RestConfiguration(logRequests = logNetworkTraffic)))
+fun businessModule(
+    persistenceFactory: SmartHomePersistenceFactory,
+    logNetworkTraffic: Boolean = false,
+): Module = module {
+    includes(
+        persistenceModule(persistenceFactory),
+        restModule(RestConfiguration(logRequests = logNetworkTraffic)),
+    )
 
-    single<AccessTokenStore> { InMemoryAccessTokenStore() }
-    single<AccessTokenProvider> { get<AccessTokenStore>() }
+    single<Clock> { Clock.System }
+    single<AccessTokenProvider> { StoredAccessTokenProvider(get(), get()) }
 
     factory { DeviceListing(get()) }
-    factory { TokenAuthentication(get(), get()) }
+    factory { SessionInspection(get(), get()) }
     factory { SessionTermination(get()) }
+    factory { TokenAuthentication(get(), get(), get()) }
 
     single<DeviceCatalog> { DeviceCatalogImpl(get()) }
-    single<SmartHomeSession> { SmartHomeSessionImpl(get(), get()) }
+    single<SmartHomeSession> { SmartHomeSessionImpl(get(), get(), get()) }
 }

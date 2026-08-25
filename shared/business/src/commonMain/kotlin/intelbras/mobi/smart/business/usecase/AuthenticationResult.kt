@@ -1,7 +1,9 @@
 package intelbras.mobi.smart.business.usecase
 
+import kotlin.time.Instant
+
 sealed interface AuthenticationResult {
-    data object Success : AuthenticationResult
+    data class Success(val expiresAt: Instant) : AuthenticationResult
 
     data object MissingToken : AuthenticationResult
 
