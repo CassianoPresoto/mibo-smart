@@ -14,4 +14,9 @@ internal object ApiRoutes {
 
     const val CREATE_VIDEO_STREAM = "/cameras/criar-fluxo-video/v1"
     const val RECORDING = "/cameras/gravacao/v1"
+
+    const val AVAILABLE_QUOTA = "/streaming/cota-disponivel/v1"
+    const val MY_SESSIONS = "/streaming/minhas-sessoes/v1"
+    const val SESSION_INFO = "/streaming/sessao-info/v1"
+    const val END_SESSION = "/streaming/encerrar-sessao/v1"
 }
