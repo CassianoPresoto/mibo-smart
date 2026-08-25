@@ -3,6 +3,7 @@ package intelbras.mobi.smart.rest.di
 import intelbras.mobi.smart.domain.auth.AuthenticationRepository
 import intelbras.mobi.smart.domain.camera.CameraRepository
 import intelbras.mobi.smart.domain.device.DeviceRepository
+import intelbras.mobi.smart.domain.light.LightRepository
 import intelbras.mobi.smart.domain.lock.LockRepository
 import intelbras.mobi.smart.domain.streaming.StreamingRepository
 import intelbras.mobi.smart.rest.RestConfiguration
@@ -13,6 +14,7 @@ import intelbras.mobi.smart.rest.client.restJson
 import intelbras.mobi.smart.rest.repository.AuthenticationRestRepository
 import intelbras.mobi.smart.rest.repository.CameraRestRepository
 import intelbras.mobi.smart.rest.repository.DeviceRestRepository
+import intelbras.mobi.smart.rest.repository.LightRestRepository
 import intelbras.mobi.smart.rest.repository.LockRestRepository
 import intelbras.mobi.smart.rest.repository.StreamingRestRepository
 import io.ktor.client.HttpClient
@@ -36,4 +38,5 @@ fun restModule(
     single<CameraRepository> { CameraRestRepository(get()) }
     single<StreamingRepository> { StreamingRestRepository(get()) }
     single<LockRepository> { LockRestRepository(get()) }
+    single<LightRepository> { LightRestRepository(get()) }
 }
