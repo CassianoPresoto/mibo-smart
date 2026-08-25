@@ -32,4 +32,13 @@ internal object ApiRoutes {
     const val LOCK_CREATE_DYNAMIC_PASSWORD = "/fechaduras/criar-senha-dinamica/v1"
     const val LOCK_DELETE_SINGLE_PASSWORD = "/fechaduras/deletar-senha-unica/v1"
     const val LOCK_DELETE_PERIODIC_PASSWORD = "/fechaduras/deletar-senha-periodica/v1"
+
+    const val LIGHT_POWER = "/lampadas/ligada/v1"
+    const val LIGHT_START_TIMER = "/lampadas/iniciar-temporizador/v1"
+    const val LIGHT_STOP_TIMER = "/lampadas/parar-temporizador/v1"
+    const val LIGHT_BRIGHTNESS = "/lampadas/mudar-brilho/v1"
+    const val LIGHT_CONTRAST = "/lampadas/mudar-contraste/v1"
+    const val LIGHT_COLOR = "/lampadas/mudar-cor/v1"
+    const val LIGHT_MODE = "/lampadas/mudar-modo/v1"
+    const val LIGHT_TEMPERATURE = "/lampadas/mudar-temperatura/v1"
 }
