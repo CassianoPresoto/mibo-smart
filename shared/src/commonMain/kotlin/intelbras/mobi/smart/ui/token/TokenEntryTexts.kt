@@ -9,9 +9,6 @@ internal object TokenEntryTexts {
     const val SUBMIT = "Entrar"
     const val SUBMITTING = "Validando o token…"
     const val CHECKING_SESSION = "Verificando a sessão salva…"
-    const val CONNECTED_TITLE = "Sessão ativa"
-    const val SIGN_OUT = "Sair"
-    const val SESSION_VALIDITY = "O token vale por 2 horas a partir da entrada."
 
     fun failureMessage(failure: TokenEntryFailure): String = when (failure) {
         TokenEntryFailure.EmptyToken -> "Cole o token de acesso para continuar."

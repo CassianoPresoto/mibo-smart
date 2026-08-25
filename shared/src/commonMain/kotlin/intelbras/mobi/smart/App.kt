@@ -3,7 +3,7 @@ package intelbras.mobi.smart
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import intelbras.mobi.smart.ui.token.TokenEntryRoute
+import intelbras.mobi.smart.ui.SmartHomeApp
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -11,7 +11,7 @@ import androidx.compose.ui.tooling.preview.Preview
 fun App() {
     MaterialTheme {
         Surface {
-            TokenEntryRoute()
+            SmartHomeApp()
         }
     }
 }
