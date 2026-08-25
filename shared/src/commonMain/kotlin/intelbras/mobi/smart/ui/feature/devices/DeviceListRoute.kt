@@ -7,16 +7,18 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 internal fun DeviceListRoute(
-    onDeviceSelected: (DeviceListItem) -> Unit,
-    onSignOut: () -> Unit,
+    onDeviceClick: (DeviceUiModel) -> Unit,
+    onAccountClick: () -> Unit,
     viewModel: DeviceListViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     DeviceListScreen(
         uiState = uiState,
-        onReload = viewModel::onReload,
-        onDeviceSelected = onDeviceSelected,
-        onSignOut = onSignOut,
+        onFilterSelected = viewModel::onFilterSelected,
+        onDeviceClick = onDeviceClick,
+        onRetry = viewModel::onRetry,
+        onLoadMore = viewModel::onLoadMore,
+        onAccountClick = onAccountClick,
     )
 }

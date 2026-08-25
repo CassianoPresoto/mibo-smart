@@ -14,9 +14,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import intelbras.mobi.smart.domain.device.model.DeviceKind
 import intelbras.mobi.smart.domain.device.model.DeviceReference
-import intelbras.mobi.smart.ui.feature.devices.DeviceListItem
+import intelbras.mobi.smart.ui.feature.devices.DeviceKind
+import intelbras.mobi.smart.ui.feature.devices.DeviceUiModel
 import intelbras.mobi.smart.ui.feature.devices.DeviceListRoute as DeviceListDestination
 import intelbras.mobi.smart.ui.feature.session.SessionCheckRoute as SessionCheckDestination
 import intelbras.mobi.smart.ui.feature.lock.LockRoute as LockDestination
@@ -64,10 +64,10 @@ internal fun AppNavHost(
 
         composable<DeviceListRoute> {
             DeviceListDestination(
-                onDeviceSelected = { device ->
+                onDeviceClick = { device ->
                     device.destination()?.let { destination -> navController.navigate(destination) }
                 },
-                onSignOut = {
+                onAccountClick = {
                     sessionViewModel.onSignOut()
                     navController.navigate(TokenEntryRoute()) {
                         popUpTo(DeviceListRoute) { inclusive = true }
@@ -104,10 +104,10 @@ private fun NavHostController.openDeviceList(from: Any) {
     }
 }
 
-private fun DeviceListItem.destination(): Any? = when (kind) {
-    DeviceKind.Camera -> LiveVideoRoute(address, productId, name, model)
-    DeviceKind.Lock -> LockRoute(address, productId, name, model)
-    DeviceKind.Hub, DeviceKind.Unknown -> null
+private fun DeviceUiModel.destination(): Any? = when (kind) {
+    DeviceKind.Camera -> LiveVideoRoute(id, productId, name, model)
+    DeviceKind.Lock -> LockRoute(id, productId, name, model)
+    DeviceKind.Light, DeviceKind.Sensor, DeviceKind.Other -> null
 }
 
 private fun LiveVideoRoute.reference() =
