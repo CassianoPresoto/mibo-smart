@@ -5,7 +5,7 @@ sealed interface VideoPlaybackState {
 
     data object Buffering : VideoPlaybackState
 
-    data object Playing : VideoPlaybackState
+    data class Playing(val session: LiveVideoSession) : VideoPlaybackState
 
     data class Reconnecting(val attempt: Int) : VideoPlaybackState
 

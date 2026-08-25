@@ -2,7 +2,10 @@ package intelbras.mobi.smart.ui.video
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import intelbras.mobi.smart.business.StreamingMonitor
 import intelbras.mobi.smart.business.VideoPlayback
+import intelbras.mobi.smart.business.usecase.LiveVideoSession
+import intelbras.mobi.smart.business.usecase.StreamingUsageResult
 import intelbras.mobi.smart.business.usecase.VideoPlaybackFailure
 import intelbras.mobi.smart.business.usecase.VideoPlaybackState
 import intelbras.mobi.smart.domain.device.model.DeviceReference
@@ -11,14 +14,19 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class LiveVideoViewModel(
     private val videoPlayback: VideoPlayback,
+    private val streamingMonitor: StreamingMonitor,
 ) : ViewModel() {
 
     private val mutableUiState = MutableStateFlow<LiveVideoUiState>(LiveVideoUiState.Connecting)
     val uiState: StateFlow<LiveVideoUiState> = mutableUiState.asStateFlow()
+
+    private val mutableDetails = MutableStateFlow(LiveVideoDetails())
+    val details: StateFlow<LiveVideoDetails> = mutableDetails.asStateFlow()
 
     private var watched: WatchedDevice? = null
     private var playback: Job? = null
@@ -29,6 +37,13 @@ class LiveVideoViewModel(
     }
 
     fun onRetry() = startPlayback()
+
+    fun onDetailsToggled() {
+        val expanded = !mutableDetails.value.isExpanded
+        mutableDetails.update { details -> details.copy(isExpanded = expanded) }
+
+        if (expanded) readUsage()
+    }
 
     fun onScreenClosed() {
         playback?.cancel()
@@ -48,14 +63,50 @@ class LiveVideoViewModel(
         playback = viewModelScope.launch {
             videoPlayback.play(watched.device, watched.player).collect { state ->
                 mutableUiState.value = state.toUiState()
+                if (state is VideoPlaybackState.Playing) rememberSession(state.session)
             }
         }
+    }
+
+    private fun rememberSession(session: LiveVideoSession) {
+        val isNewSession = mutableDetails.value.sessionId != session.sessionId
+        mutableDetails.update { details ->
+            details.copy(
+                sessionId = session.sessionId,
+                quotaGb = session.quotaGb,
+                usage = if (isNewSession) null else details.usage,
+            )
+        }
+        if (mutableDetails.value.isExpanded) readUsage()
+    }
+
+    private fun readUsage() {
+        val sessionId = mutableDetails.value.sessionId
+        if (sessionId.isBlank()) return
+
+        mutableDetails.update { details -> details.copy(isReadingUsage = true) }
+        viewModelScope.launch {
+            val measured = streamingMonitor.usageOf(sessionId).toUsage()
+            mutableDetails.update { details ->
+                details.copy(isReadingUsage = false, usage = measured)
+            }
+        }
+    }
+
+    private fun StreamingUsageResult.toUsage(): LiveVideoUsage? = when (this) {
+        is StreamingUsageResult.Measured -> LiveVideoUsage(
+            consumedBytes = usage.consumedBytes,
+            remainingQuotaGb = usage.remainingQuotaGb,
+            isSessionActive = usage.isActive,
+        )
+
+        StreamingUsageResult.Unavailable -> null
     }
 
     private fun VideoPlaybackState.toUiState(): LiveVideoUiState = when (this) {
         VideoPlaybackState.Connecting -> LiveVideoUiState.Connecting
         VideoPlaybackState.Buffering -> LiveVideoUiState.Buffering
-        VideoPlaybackState.Playing -> LiveVideoUiState.Playing
+        is VideoPlaybackState.Playing -> LiveVideoUiState.Playing
         is VideoPlaybackState.Reconnecting -> LiveVideoUiState.Reconnecting(attempt)
         VideoPlaybackState.Ended -> LiveVideoUiState.Ended
         is VideoPlaybackState.Failed -> LiveVideoUiState.Failed(failure.toUiFailure())

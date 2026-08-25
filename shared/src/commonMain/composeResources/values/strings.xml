@@ -39,9 +39,35 @@
     <string name="live_video_connecting">Conectando à câmera…</string>
     <string name="live_video_buffering">Carregando o vídeo…</string>
     <string name="live_video_reconnecting">Reconectando… tentativa %1$d</string>
+    <string name="live_video_playing">Ao vivo</string>
+    <string name="live_video_status_title">Status da câmera</string>
     <string name="live_video_ended">A transmissão terminou.</string>
     <string name="live_video_watch_again">Assistir de novo</string>
     <string name="live_video_retry">Tentar de novo</string>
+
+    <string name="live_video_details_more">Ver mais</string>
+    <string name="live_video_details_less">Ver menos</string>
+    <string name="live_video_details_model">Modelo</string>
+    <string name="live_video_details_serial">Número de série</string>
+    <string name="live_video_details_session">Sessão</string>
+    <string name="live_video_details_quota">Cota da sessão</string>
+    <string name="live_video_details_consumed">Consumido</string>
+    <string name="live_video_details_remaining">Cota restante</string>
+    <string name="live_video_details_session_active">Sessão ativa</string>
+    <string name="live_video_details_no_session">A sessão de streaming ainda não foi aberta.</string>
+    <string name="live_video_details_no_usage">A plataforma não informou o consumo desta sessão.</string>
+    <string name="live_video_gigabytes">%1$s GB</string>
+    <string name="live_video_megabytes">%1$s MB</string>
+    <string name="live_video_yes">Sim</string>
+    <string name="live_video_no">Não</string>
+
+    <string name="live_video_headline_not_supported">Sem vídeo ao vivo</string>
+    <string name="live_video_headline_device_offline">Câmera offline</string>
+    <string name="live_video_headline_quota">Cota de streaming esgotada</string>
+    <string name="live_video_headline_session_expired">Sessão expirada</string>
+    <string name="live_video_headline_network">Sem conexão</string>
+    <string name="live_video_headline_interrupted">Vídeo interrompido</string>
+    <string name="live_video_headline_unexpected">Não foi possível abrir o vídeo</string>
 
     <string name="live_video_failure_not_supported">Este dispositivo não transmite vídeo ao vivo.</string>
     <string name="live_video_failure_device_offline">A câmera está offline. Verifique se ela está ligada e conectada.</string>

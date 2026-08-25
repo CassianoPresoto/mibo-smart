@@ -51,6 +51,7 @@ private fun SignedInApp(onSignOut: () -> Unit) {
                 productId = device.productId,
             ),
             deviceName = device.name,
+            deviceModel = device.model,
             onLeave = { watchedDevice = null },
         )
     }

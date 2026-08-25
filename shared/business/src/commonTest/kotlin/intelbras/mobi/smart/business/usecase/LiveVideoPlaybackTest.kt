@@ -47,7 +47,13 @@ class LiveVideoPlaybackTest {
             listOf<VideoPlaybackState>(
                 VideoPlaybackState.Connecting,
                 VideoPlaybackState.Buffering,
-                VideoPlaybackState.Playing,
+                VideoPlaybackState.Playing(
+                    LiveVideoSession(
+                        streamUrl = "https://stream/1",
+                        sessionId = "session-1",
+                        quotaGb = 1.0,
+                    )
+                ),
             ),
             watching.states,
         )
