@@ -1,9 +1,7 @@
 package intelbras.mobi.smart.business.usecase
 
-import intelbras.mobi.smart.domain.device.model.DeviceListPage
-
 sealed interface DeviceListResult {
-    data class Success(val page: DeviceListPage) : DeviceListResult
+    data class Success(val devices: List<CatalogDevice>) : DeviceListResult
 
     data object Empty : DeviceListResult
 

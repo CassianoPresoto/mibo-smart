@@ -35,7 +35,7 @@ class DeviceListViewModel(
     }
 
     private fun DeviceListResult.toUiState(): DeviceListUiState = when (this) {
-        is DeviceListResult.Success -> DeviceListUiState.Loaded(page.devices.map { it.toListItem() })
+        is DeviceListResult.Success -> DeviceListUiState.Loaded(devices.map { it.toListItem() })
         DeviceListResult.Empty -> DeviceListUiState.Empty
         DeviceListResult.InvalidToken -> DeviceListUiState.Failed(DeviceListFailure.InvalidToken)
         DeviceListResult.NetworkUnavailable ->

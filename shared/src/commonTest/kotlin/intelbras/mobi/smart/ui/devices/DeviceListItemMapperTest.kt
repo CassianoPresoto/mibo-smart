@@ -1,5 +1,6 @@
 package intelbras.mobi.smart.ui.devices
 
+import intelbras.mobi.smart.domain.device.model.DeviceKind
 import intelbras.mobi.smart.domain.device.model.DeviceStatus
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -35,6 +36,19 @@ class DeviceListItemMapperTest {
 
         assertEquals("SERIAL-9", item.serialNumber)
         assertEquals("PRODUTO-9", item.productId)
+    }
+
+    @Test
+    fun `carries the kind the platform announced`() {
+        assertEquals(DeviceKind.Camera, device(kind = DeviceKind.Camera).toListItem().kind)
+        assertEquals(DeviceKind.Unknown, device(kind = DeviceKind.Unknown).toListItem().kind)
+    }
+
+    @Test
+    fun `only a camera has a screen of its own today`() {
+        assertTrue(device(kind = DeviceKind.Camera).toListItem().hasScreenOfItsOwn)
+        assertFalse(device(kind = DeviceKind.Lock).toListItem().hasScreenOfItsOwn)
+        assertFalse(device(kind = DeviceKind.Unknown).toListItem().hasScreenOfItsOwn)
     }
 
     @Test

@@ -5,10 +5,14 @@ import dev.mokkery.everySuspend
 import dev.mokkery.matcher.any
 import dev.mokkery.mock
 import intelbras.mobi.smart.business.usecase.DeviceListResult
+import intelbras.mobi.smart.business.usecase.CatalogDevice
+import intelbras.mobi.smart.business.usecase.DeviceKindResolution
 import intelbras.mobi.smart.business.usecase.DeviceListing
 import intelbras.mobi.smart.domain.device.DeviceRepository
 import intelbras.mobi.smart.domain.device.model.Device
 import intelbras.mobi.smart.domain.device.model.DeviceListPage
+import intelbras.mobi.smart.domain.device.model.DeviceCapabilities
+import intelbras.mobi.smart.domain.device.model.DeviceKind
 import intelbras.mobi.smart.domain.device.model.DeviceOriginFilter
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -27,11 +31,17 @@ class DeviceCatalogTest {
     fun `lists the devices of the requested origin`() = runTest {
         val deviceRepository = mock<DeviceRepository> {
             everySuspend { listDevices(any()) } returns page
+            everySuspend { readCapabilities(any()) } returns DeviceCapabilities("RTSV1")
         }
-        val catalog: DeviceCatalog = DeviceCatalogImpl(DeviceListing(deviceRepository))
+        val catalog: DeviceCatalog = DeviceCatalogImpl(
+            DeviceListing(deviceRepository, DeviceKindResolution(deviceRepository, noLock())),
+        )
 
         val result = catalog.listDevices(origin = DeviceOriginFilter.Linked)
 
-        assertEquals(DeviceListResult.Success(page), result)
+        assertEquals(
+            DeviceListResult.Success(listOf(CatalogDevice(page.devices.single(), DeviceKind.Camera))),
+            result,
+        )
     }
 }

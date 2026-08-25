@@ -1,5 +1,7 @@
 package intelbras.mobi.smart.ui.devices
 
+import intelbras.mobi.smart.domain.device.model.DeviceKind
+
 sealed interface DeviceListUiState {
     data object Loading : DeviceListUiState
 
@@ -16,7 +18,10 @@ data class DeviceListItem(
     val name: String,
     val model: String,
     val isOnline: Boolean,
-)
+    val kind: DeviceKind,
+) {
+    val hasScreenOfItsOwn: Boolean get() = kind == DeviceKind.Camera
+}
 
 sealed interface DeviceListFailure {
     data object InvalidToken : DeviceListFailure

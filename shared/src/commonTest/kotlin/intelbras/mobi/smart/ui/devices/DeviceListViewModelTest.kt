@@ -7,6 +7,7 @@ import dev.mokkery.mock
 import dev.mokkery.verifySuspend
 import intelbras.mobi.smart.business.DeviceCatalog
 import intelbras.mobi.smart.business.usecase.DeviceListResult
+import intelbras.mobi.smart.domain.device.model.DeviceKind
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -32,7 +33,7 @@ class DeviceListViewModelTest {
 
     @Test
     fun `loads the devices as soon as the screen opens`() = runTest(testDispatcher) {
-        val catalog = catalogReturning(DeviceListResult.Success(pageOf(device())))
+        val catalog = catalogReturning(DeviceListResult.Success(listOf(device())))
         val viewModel = DeviceListViewModel(catalog)
 
         assertEquals(DeviceListUiState.Loading, viewModel.uiState.value)
@@ -45,11 +46,11 @@ class DeviceListViewModelTest {
 
     @Test
     fun `shows every device returned by the platform`() = runTest(testDispatcher) {
-        val page = pageOf(
+        val devices = listOf(
             device(serialNumber = "SERIAL-1", name = "Câmera da sala"),
-            device(serialNumber = "SERIAL-2", name = "Fechadura da porta"),
+            device(serialNumber = "SERIAL-2", name = "Fechadura da porta", kind = DeviceKind.Unknown),
         )
-        val viewModel = DeviceListViewModel(catalogReturning(DeviceListResult.Success(page)))
+        val viewModel = DeviceListViewModel(catalogReturning(DeviceListResult.Success(devices)))
 
         testScheduler.advanceUntilIdle()
 
@@ -102,7 +103,7 @@ class DeviceListViewModelTest {
 
         everySuspend {
             catalog.listDevices(any(), any(), any())
-        } returns DeviceListResult.Success(pageOf(device()))
+        } returns DeviceListResult.Success(listOf(device()))
         viewModel.onReload()
 
         assertEquals(DeviceListUiState.Loading, viewModel.uiState.value)

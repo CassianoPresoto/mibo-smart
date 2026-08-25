@@ -1,11 +1,12 @@
 package intelbras.mobi.smart.ui.devices
 
-import intelbras.mobi.smart.domain.device.model.Device
+import intelbras.mobi.smart.business.usecase.CatalogDevice
 
-internal fun Device.toListItem(): DeviceListItem = DeviceListItem(
-    serialNumber = serialNumber,
-    productId = productId,
-    name = name.ifBlank { model }.ifBlank { serialNumber },
-    model = model,
-    isOnline = isOnline,
+internal fun CatalogDevice.toListItem(): DeviceListItem = DeviceListItem(
+    serialNumber = device.serialNumber,
+    productId = device.productId,
+    name = device.name.ifBlank { device.model }.ifBlank { device.serialNumber },
+    model = device.model,
+    isOnline = device.isOnline,
+    kind = kind,
 )
