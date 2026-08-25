@@ -54,6 +54,24 @@ class LiveVideoPlaybackTest {
     }
 
     @Test
+    fun `does not miss what the player reports the moment it starts`() = runTest {
+        val player = FakeVideoPlayer(reportedOnStart = listOf(VideoPlayerEvent.Buffering))
+
+        val watching = watch(
+            connector = FakeDeviceConnector(connectionTo("https://stream/1", "session-1")),
+            player = player,
+        )
+
+        assertEquals(
+            listOf<VideoPlaybackState>(
+                VideoPlaybackState.Connecting,
+                VideoPlaybackState.Buffering,
+            ),
+            watching.states,
+        )
+    }
+
+    @Test
     fun `stops with the reason the platform gave for refusing the connection`() = runTest {
         val watching = watch(FakeDeviceConnector(DeviceConnectionResult.QuotaExceeded))
 
@@ -191,8 +209,10 @@ class LiveVideoPlaybackTest {
         is DeviceConnection.LiveVideo -> session.sessionId
     }
 
-    private fun TestScope.watch(connector: FakeDeviceConnector): Watching {
-        val player = FakeVideoPlayer()
+    private fun TestScope.watch(
+        connector: FakeDeviceConnector,
+        player: FakeVideoPlayer = FakeVideoPlayer(),
+    ): Watching {
         val states = mutableListOf<VideoPlaybackState>()
         val playback = LiveVideoPlayback(connector, retryPolicy)
         val job = backgroundScope.launch { playback(camera, player).toList(states) }

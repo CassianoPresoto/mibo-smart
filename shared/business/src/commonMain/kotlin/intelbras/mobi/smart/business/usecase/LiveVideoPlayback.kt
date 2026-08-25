@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 
 private const val NO_ATTEMPT_YET = 0
@@ -34,9 +35,9 @@ internal class LiveVideoPlayback(
             var attempt = NO_ATTEMPT_YET
             while (true) {
                 val session = connection?.session ?: return@flow
-                player.start(PlaybackSource.LiveVideo(session.streamUrl))
+                val source = PlaybackSource.LiveVideo(session.streamUrl)
 
-                val failure = playUntilItStops(player)
+                val failure = playUntilItStops(player, source)
                 if (failure == null) {
                     emit(VideoPlaybackState.Ended)
                     return@flow
@@ -77,8 +78,10 @@ internal class LiveVideoPlayback(
 
     private suspend fun FlowCollector<VideoPlaybackState>.playUntilItStops(
         player: VideoPlayer,
+        source: PlaybackSource,
     ): PlaybackFailure? {
         val lastEvent = player.events
+            .onStart { player.start(source) }
             .onEach { event -> emitProgressOf(event) }
             .firstOrNull { event -> event.stopsThePlayback() }
 

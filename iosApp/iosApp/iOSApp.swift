@@ -5,6 +5,7 @@ import Shared
 struct iOSApp: App {
     init() {
         SmartHomeKoinIosKt.startSmartHomeDependencies(logNetworkTraffic: false)
+        IosVideoPlayback.shared.provider = { VlcVideoPlayback() }
     }
 
     var body: some Scene {

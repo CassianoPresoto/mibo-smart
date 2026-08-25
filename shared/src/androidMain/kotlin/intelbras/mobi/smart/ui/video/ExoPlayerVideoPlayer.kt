@@ -15,10 +15,12 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
 private const val EVENT_BUFFER = 16
+private const val LAST_EVENT = 1
 
 internal class ExoPlayerVideoPlayer(context: Context) : VideoPlayer {
 
     private val reported = MutableSharedFlow<VideoPlayerEvent>(
+        replay = LAST_EVENT,
         extraBufferCapacity = EVENT_BUFFER,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
@@ -38,6 +40,7 @@ internal class ExoPlayerVideoPlayer(context: Context) : VideoPlayer {
     }
 
     override fun start(source: PlaybackSource) {
+        reported.resetReplayCache()
         exoPlayer.setMediaItem(MediaItem.fromUri(source.url))
         exoPlayer.prepare()
         exoPlayer.playWhenReady = true
