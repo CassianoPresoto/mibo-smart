@@ -6,6 +6,8 @@ internal object TokenEntryTexts {
     const val WHERE_TO_FIND =
         "Gere o token em open-casainteligente.intelbras.com.br, no menu Contas → Token Temporário."
     const val TOKEN_LABEL = "Token de acesso"
+    const val SHOW_TOKEN = "Mostrar"
+    const val HIDE_TOKEN = "Ocultar"
     const val SUBMIT = "Entrar"
     const val SUBMITTING = "Validando o token…"
     const val CHECKING_SESSION = "Verificando a sessão salva…"
