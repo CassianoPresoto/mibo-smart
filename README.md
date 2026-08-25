@@ -1,31 +1,99 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+# Mibo Smart
 
-* [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+Aplicação Kotlin Multiplatform (Android + iOS) que consome as APIs da plataforma
+Open Casa Inteligente da Intelbras.
 
-* [/shared](./shared/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./shared/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./shared/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
-    folder is the appropriate location.
+## Arquitetura de módulos
 
-### Running the apps
+```
+:shared            app comum (Compose Multiplatform) — conhece apenas :shared:business
+ ├── :shared:business   regras de negócio e casos de uso — conhece domain e rest
+ ├── :shared:rest       client HTTP (Ktor) da Open Casa Inteligente — conhece domain
+ └── :shared:domain     modelos, contratos e tipos de erro — não conhece ninguém
+```
 
-Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
+As dependências apontam sempre para dentro. A comunicação entre módulos acontece
+por interfaces declaradas em `:shared:domain` (`DeviceRepository`, `LockRepository`,
+`AccessTokenProvider`, casos de uso) e implementadas nas camadas externas, de forma que
+trocar o client HTTP ou uma regra não exige tocar nos outros módulos.
 
-- Android app: `./gradlew :androidApp:assembleDebug`
-- iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+Cada módulo publica seu próprio módulo Koin e os agrega por composição:
+`restModule()` ← incluído por `businessModule()` ← consumido pelo app em
+`startSmartHomeDependencies()`. O `:shared:domain` não tem módulo Koin porque não
+instancia nada.
 
-### Running tests
+### :shared:domain
 
-Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
+Modelos anotados com `@Serializable` (o mesmo tipo atravessa rede e regra de negócio).
+Todo identificador é em inglês; o nome que a API espera fica no `@SerialName`
+(`@SerialName("ns") val serialNumber`, `@SerialName("tamanhoPagina") val pageSize`), então
+renomear no código nunca muda o corpo enviado. Além disso:
+enums fechados para estados (`DeviceStatus`, `LockVolumeLevel`, `LightMode`),
+resultado explícito `Outcome<T>` (`Success`/`Failure`) e o catálogo de erros
+`SmartHomeError` (token ausente, token inválido/expirado, rede indisponível, cota de
+streaming estourada, requisição inválida, operação recusada, resposta inesperada).
 
-- Android tests: `./gradlew :shared:testAndroidHostTest`
-- iOS tests: `./gradlew :shared:iosSimulatorArm64Test`
+### :shared:rest
 
----
+Client Ktor da plataforma. Cada tag do Swagger "Gerenciador de APIs Mibo" (autenticação,
+produtos, câmeras, streaming, fechaduras, lâmpadas e sensores) vira um repositório próprio,
+entregue em uma etapa. Pontos de atenção do contrato tratados aqui:
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+- todos os endpoints são `POST` no host `open-casainteligente.intelbras.com.br`;
+- o envelope da plataforma é inconsistente (`{statusCode, body:{status, data}}` em uns,
+  `{status, data}` em outros) — `EnvelopeReader` aceita os dois formatos;
+- o header `Authorization` nunca aparece no log (`sanitizeHeader`).
+
+## Tratamento de erro
+
+O rest **lança**: `SmartHomeApiException` é sealed e cada falha tem seu tipo
+(`SmartHomeUnauthorizedException`, `SmartHomeQuotaExceededException`,
+`SmartHomeOperationRejectedException`, `SmartHomeNetworkException`…). A decisão por status HTTP
+fica no `ensureSuccess` do `SmartHomeApiCaller`; a decisão que depende do endpoint fica no
+próprio endpoint, pelo gancho `onEndpointError` — é assim que `HTTP 400` em
+`cameras/gravacao` vira `SmartHomeDeviceOfflineException` ou `SmartHomeRecordingNotFoundException`
+conforme a mensagem, sem que nenhum outro endpoint saiba disso.
+
+O business traduz exception no resultado daquela intenção, um sealed por caso de uso, então a
+tela trata os casos que existem para ela em vez de um catálogo global. Regra de negócio mora
+aqui, não no client: `HTTP 500` com "Erro desconhecido" é uma resposta real do gateway para
+token expirado, e é o caso de uso — não o rest — que decide interpretá-la assim.
+
+Todo `catch` de `Throwable` relança `CancellationException` antes de tratar, para não engolir
+cancelamento de coroutine.
+
+### :shared:business
+
+Casos de uso e guarda do token de acesso em memória. Cada caso de uso mora em
+`business/usecase` junto do resultado daquela intenção (um sealed com os casos que a tela
+precisa tratar), e o módulo publica fachadas por área — `SmartHomeSession`, `DeviceCatalog` —
+que são o que o app consome.
+
+## Rodando
+
+- App Android: `./gradlew :androidApp:assembleDebug`
+- App iOS: abrir [/iosApp](./iosApp) no Xcode e executar de lá.
+
+### Testes
+
+No `:shared:rest` cada método de repositório tem seu teste: o `MockEngine` do Ktor intercepta
+a requisição que sairia e o teste confere método, rota, corpo JSON exato e a resposta já
+convertida em modelo de domínio — mais os cenários de falha em `assertFailsWith`. O
+`SmartHomeApiCallerTest` concentra o que vale para todos: bearer token, ausência de token e a
+tradução de cada status HTTP em exception.
+
+No `:shared:business` os testes usam [Mokkery](https://mokkery.dev) para mockar os contratos do
+domínio, inclusive fazendo o repositório lançar (`everySuspend { ... } throws ...`) para provar
+a tradução de exception em resultado de caso de uso.
+
+- Android: `./gradlew :shared:domain:testAndroidHostTest :shared:rest:testAndroidHostTest :shared:business:testAndroidHostTest :shared:testAndroidHostTest`
+- iOS: `./gradlew :shared:rest:iosSimulatorArm64Test :shared:business:iosSimulatorArm64Test`
+
+O link dos binários iOS exige o Xcode completo selecionado
+(`sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`).
+
+### Token de acesso
+
+O token temporário é gerado pelo usuário em
+open-casainteligente.intelbras.com.br → Contas → Token Temporário e digitado no app.
+Nenhum token ou credencial é versionado neste repositório.
