@@ -4,6 +4,8 @@ import intelbras.mobi.smart.business.DeviceCatalog
 import intelbras.mobi.smart.business.DeviceCatalogImpl
 import intelbras.mobi.smart.business.DeviceConnector
 import intelbras.mobi.smart.business.DeviceConnectorImpl
+import intelbras.mobi.smart.business.LockController
+import intelbras.mobi.smart.business.LockControllerImpl
 import intelbras.mobi.smart.business.SmartHomeSession
 import intelbras.mobi.smart.business.SmartHomeSessionImpl
 import intelbras.mobi.smart.business.StreamingMonitor
@@ -16,6 +18,9 @@ import intelbras.mobi.smart.business.usecase.DeviceConnecting
 import intelbras.mobi.smart.business.usecase.DeviceKindResolution
 import intelbras.mobi.smart.business.usecase.DeviceListing
 import intelbras.mobi.smart.business.usecase.LiveVideoPlayback
+import intelbras.mobi.smart.business.usecase.LockConfirmationPolicy
+import intelbras.mobi.smart.business.usecase.LockInspection
+import intelbras.mobi.smart.business.usecase.LockSwitching
 import intelbras.mobi.smart.business.usecase.PlaybackRetryPolicy
 import intelbras.mobi.smart.business.usecase.SessionInspection
 import intelbras.mobi.smart.business.usecase.StreamingUsageReading
@@ -40,6 +45,7 @@ fun businessModule(
     )
 
     single<Clock> { Clock.System }
+    single { LockConfirmationPolicy() }
     single { PlaybackRetryPolicy() }
     single<AccessTokenProvider> { StoredAccessTokenProvider(get(), get()) }
 
@@ -48,6 +54,8 @@ fun businessModule(
     factory { DeviceKindResolution(get(), get()) }
     factory { DeviceListing(get(), get()) }
     factory { LiveVideoPlayback(get(), get()) }
+    factory { LockInspection(get()) }
+    factory { LockSwitching(get(), get()) }
     factory { SessionInspection(get(), get()) }
     factory { SessionTermination(get()) }
     factory { StreamingUsageReading(get()) }
@@ -55,6 +63,7 @@ fun businessModule(
 
     single<DeviceCatalog> { DeviceCatalogImpl(get()) }
     single<DeviceConnector> { DeviceConnectorImpl(get(), get()) }
+    single<LockController> { LockControllerImpl(get(), get()) }
     single<SmartHomeSession> { SmartHomeSessionImpl(get(), get(), get()) }
     single<StreamingMonitor> { StreamingMonitorImpl(get()) }
     single<VideoPlayback> { VideoPlaybackImpl(get()) }

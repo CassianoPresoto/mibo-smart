@@ -13,7 +13,15 @@ data object DeviceListRoute
 
 @Serializable
 data class LiveVideoRoute(
-    val serialNumber: String,
+    val address: String,
+    val productId: String,
+    val name: String,
+    val model: String,
+)
+
+@Serializable
+data class LockRoute(
+    val address: String,
     val productId: String,
     val name: String,
     val model: String,
