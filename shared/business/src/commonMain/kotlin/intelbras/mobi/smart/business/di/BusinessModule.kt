@@ -1,6 +1,9 @@
 package intelbras.mobi.smart.business.di
 
+import intelbras.mobi.smart.business.DeviceCatalog
+import intelbras.mobi.smart.business.DeviceCatalogImpl
 import intelbras.mobi.smart.business.session.InMemoryAccessTokenStore
+import intelbras.mobi.smart.business.usecase.DeviceListing
 import intelbras.mobi.smart.domain.auth.AccessTokenProvider
 import intelbras.mobi.smart.domain.auth.AccessTokenStore
 import intelbras.mobi.smart.rest.RestConfiguration
@@ -13,4 +16,8 @@ fun businessModule(logNetworkTraffic: Boolean = false): Module = module {
 
     single<AccessTokenStore> { InMemoryAccessTokenStore() }
     single<AccessTokenProvider> { get<AccessTokenStore>() }
+
+    factory { DeviceListing(get()) }
+
+    single<DeviceCatalog> { DeviceCatalogImpl(get()) }
 }
