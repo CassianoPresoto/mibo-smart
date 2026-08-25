@@ -35,9 +35,9 @@ streaming estourada, requisição inválida, operação recusada, resposta inesp
 
 ### :shared:rest
 
-Client Ktor da plataforma. Cada tag do Swagger "Gerenciador de APIs Mibo" (autenticação,
-produtos, câmeras, streaming, fechaduras, lâmpadas e sensores) vira um repositório próprio,
-entregue em uma etapa. Pontos de atenção do contrato tratados aqui:
+Client Ktor cobrindo os 39 endpoints do Swagger "Gerenciador de APIs Mibo", agrupados
+por tag em sete repositórios: autenticação, produtos, câmeras, streaming, fechaduras,
+lâmpadas e sensores. Pontos de atenção do contrato tratados aqui:
 
 - todos os endpoints são `POST` no host `open-casainteligente.intelbras.com.br`;
 - o envelope da plataforma é inconsistente (`{statusCode, body:{status, data}}` em uns,
@@ -54,20 +54,22 @@ próprio endpoint, pelo gancho `onEndpointError` — é assim que `HTTP 400` em
 `cameras/gravacao` vira `SmartHomeDeviceOfflineException` ou `SmartHomeRecordingNotFoundException`
 conforme a mensagem, sem que nenhum outro endpoint saiba disso.
 
-O business traduz exception no resultado daquela intenção, um sealed por caso de uso, então a
-tela trata os casos que existem para ela em vez de um catálogo global. Regra de negócio mora
-aqui, não no client: `HTTP 500` com "Erro desconhecido" é uma resposta real do gateway para
-token expirado, e é o caso de uso — não o rest — que decide interpretá-la assim.
+O business traduz exception no resultado daquela intenção: `DeviceListResult` tem
+`Success`/`Empty`/`InvalidToken`/`NetworkUnavailable`/`Error(cause)`, então a tela trata os casos
+que existem para ela em vez de um catálogo global. Regra de negócio mora aqui, não no client:
+`HTTP 500` com "Erro desconhecido" é uma resposta real do gateway para token expirado, e é o
+caso de uso — não o rest — que decide interpretá-la assim.
 
 Todo `catch` de `Throwable` relança `CancellationException` antes de tratar, para não engolir
 cancelamento de coroutine.
 
 ### :shared:business
 
-Casos de uso e guarda do token de acesso em memória. Cada caso de uso mora em
-`business/usecase` junto do resultado daquela intenção (um sealed com os casos que a tela
-precisa tratar), e o módulo publica fachadas por área — `SmartHomeSession`, `DeviceCatalog` —
-que são o que o app consome.
+Casos de uso e guarda do token de acesso em memória, em `business/usecase`: o contrato
+(`ListDevices`), o resultado daquela intenção (`DeviceListResult`) e a implementação
+(`DeviceListing`) ficam juntos. Hoje: autenticar com token (valida chamando a listagem com uma
+página mínima e descarta o token se a plataforma recusar), listar dispositivos (com filtro de
+origem e paginação saneada) e encerrar sessão.
 
 ## Rodando
 
@@ -78,9 +80,9 @@ que são o que o app consome.
 
 No `:shared:rest` cada método de repositório tem seu teste: o `MockEngine` do Ktor intercepta
 a requisição que sairia e o teste confere método, rota, corpo JSON exato e a resposta já
-convertida em modelo de domínio — mais os cenários de falha em `assertFailsWith`. O
-`SmartHomeApiCallerTest` concentra o que vale para todos: bearer token, ausência de token e a
-tradução de cada status HTTP em exception.
+convertida em modelo de domínio — mais os cenários de falha em `assertFailsWith`. Os **39
+métodos** dos sete repositórios estão cobertos. O `SmartHomeApiCallerTest` concentra o que vale
+para todos: bearer token, ausência de token e a tradução de cada status HTTP em exception.
 
 No `:shared:business` os testes usam [Mokkery](https://mokkery.dev) para mockar os contratos do
 domínio, inclusive fazendo o repositório lançar (`everySuspend { ... } throws ...`) para provar

@@ -41,4 +41,9 @@ internal object ApiRoutes {
     const val LIGHT_COLOR = "/lampadas/mudar-cor/v1"
     const val LIGHT_MODE = "/lampadas/mudar-modo/v1"
     const val LIGHT_TEMPERATURE = "/lampadas/mudar-temperatura/v1"
+
+    const val SENSOR_ARMED = "/sensores/armado/v1"
+    const val SENSOR_OPENING = "/sensores/sensor-de-abertura/v1"
+    const val SENSOR_ZIGBEE_SIGNAL = "/sensores/sinal-zigbee/v1"
+    const val SENSOR_HUMIDITY_TEMPERATURE = "/sensores/umidadeTemperatura/v1"
 }
