@@ -9,6 +9,7 @@
     <string name="token_entry_submit">Entrar</string>
     <string name="token_entry_submitting">Validando o token…</string>
     <string name="token_entry_checking_session">Verificando a sessão salva…</string>
+    <string name="token_entry_session_hint">Sessão válida por 2 horas</string>
 
     <string name="session_sign_out">Sair</string>
 
