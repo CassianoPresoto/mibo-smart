@@ -77,6 +77,14 @@ só abre o fluxo de vídeo quando ele anuncia streaming ao vivo (`RTSV*`); o que
 faz o caminho de volta pelo mesmo tipo — para o vídeo, encerrando a sessão de streaming para liberar a
 cota de 1 GB.
 
+A regra de reprodução também mora aqui, não no player: `LiveVideoPlayback` conecta, entrega a fonte ao
+player pelo contrato `VideoPlayer` (do domínio, implementado por ExoPlayer no Android e pelo player do
+sistema no iOS) e devolve um `Flow<VideoPlaybackState>`. Quando o vídeo cai, `PlaybackRetryPolicy`
+decide: falha de decodificação não tem retry; queda de rede ou fim de fluxo tenta de novo, a primeira
+tentativa recarregando a mesma URL e as seguintes abrindo uma conexão nova, com espera crescente entre
+elas. Ao sair, o player é parado e a sessão de streaming encerrada, mesmo quando a tela foi fechada no
+meio.
+
 ## Rodando
 
 - App Android: `./gradlew :androidApp:assembleDebug`
