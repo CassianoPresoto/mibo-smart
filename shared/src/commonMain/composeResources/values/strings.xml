@@ -30,4 +30,19 @@
     <string name="device_list_failure_invalid_token">Sua sessão expirou. Saia e cole um token novo para continuar.</string>
     <string name="device_list_failure_network">Sem conexão com a plataforma. Verifique a internet e tente de novo.</string>
     <string name="device_list_failure_unexpected">Não foi possível carregar os dispositivos agora. Tente novamente em instantes.</string>
+    <string name="live_video_back">Voltar</string>
+    <string name="live_video_connecting">Conectando à câmera…</string>
+    <string name="live_video_buffering">Carregando o vídeo…</string>
+    <string name="live_video_reconnecting">Reconectando… tentativa %1$d</string>
+    <string name="live_video_ended">A transmissão terminou.</string>
+    <string name="live_video_watch_again">Assistir de novo</string>
+    <string name="live_video_retry">Tentar de novo</string>
+
+    <string name="live_video_failure_not_supported">Este dispositivo não transmite vídeo ao vivo.</string>
+    <string name="live_video_failure_device_offline">A câmera está offline. Verifique se ela está ligada e conectada.</string>
+    <string name="live_video_failure_quota">A cota de streaming acabou. Tente de novo mais tarde.</string>
+    <string name="live_video_failure_session_expired">Sua sessão expirou. Saia e cole um token novo para continuar.</string>
+    <string name="live_video_failure_network">Sem conexão com a plataforma. Verifique a internet e tente de novo.</string>
+    <string name="live_video_failure_interrupted">O vídeo foi interrompido e não voltou. Tente de novo.</string>
+    <string name="live_video_failure_unexpected">Não foi possível abrir o vídeo agora. Tente novamente em instantes.</string>
 </resources>

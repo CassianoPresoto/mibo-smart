@@ -12,6 +12,7 @@ sealed interface DeviceListUiState {
 
 data class DeviceListItem(
     val serialNumber: String,
+    val productId: String,
     val name: String,
     val model: String,
     val isOnline: Boolean,
