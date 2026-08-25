@@ -29,14 +29,22 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Testes commonTest + androidHostTest
-        run: ./gradlew :shared:testAndroidHostTest --stacktrace
+        run: >
+          ./gradlew
+          :shared:domain:testAndroidHostTest
+          :shared:rest:testAndroidHostTest
+          :shared:business:testAndroidHostTest
+          :shared:testAndroidHostTest
+          --stacktrace
 
       - name: Publicar relatorios de teste
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: shared-test-reports
-          path: shared/build/reports/tests/
+          path: |
+            shared/build/reports/tests/
+            shared/*/build/reports/tests/
           if-no-files-found: ignore
 
   androidApp:
@@ -87,7 +95,12 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Testes unitarios iOS
-        run: ./gradlew :shared:iosSimulatorArm64Test --stacktrace
+        run: >
+          ./gradlew
+          :shared:rest:iosSimulatorArm64Test
+          :shared:business:iosSimulatorArm64Test
+          :shared:iosSimulatorArm64Test
+          --stacktrace
 
       - name: Build do framework Kotlin
         run: ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64 --stacktrace
@@ -108,5 +121,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: iosApp-test-reports
-          path: shared/build/reports/tests/
+          path: |
+            shared/build/reports/tests/
+            shared/*/build/reports/tests/
           if-no-files-found: ignore
