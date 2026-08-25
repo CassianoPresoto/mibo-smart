@@ -18,4 +18,16 @@
     <string name="token_failure_network">Sem conexão com a plataforma. Verifique a internet e tente de novo.</string>
     <string name="token_failure_unexpected">Não foi possível validar o token agora. Tente novamente em instantes.</string>
 
+    <string name="device_list_title">Dispositivos</string>
+    <string name="device_list_loading">Buscando seus dispositivos…</string>
+    <string name="device_list_empty_title">Nenhum dispositivo</string>
+    <string name="device_list_empty_message">Esta conta ainda não tem dispositivos vinculados ou compartilhados.</string>
+    <string name="device_list_reload">Atualizar</string>
+    <string name="device_list_retry">Tentar de novo</string>
+    <string name="device_status_online">Online</string>
+    <string name="device_status_offline">Offline</string>
+
+    <string name="device_list_failure_invalid_token">Sua sessão expirou. Saia e cole um token novo para continuar.</string>
+    <string name="device_list_failure_network">Sem conexão com a plataforma. Verifique a internet e tente de novo.</string>
+    <string name="device_list_failure_unexpected">Não foi possível carregar os dispositivos agora. Tente novamente em instantes.</string>
 </resources>

@@ -26,6 +26,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import mibosmart.shared.generated.resources.Res
+import mibosmart.shared.generated.resources.device_list_empty_message
+import mibosmart.shared.generated.resources.device_list_empty_title
+import mibosmart.shared.generated.resources.device_list_loading
+import mibosmart.shared.generated.resources.device_list_reload
+import mibosmart.shared.generated.resources.device_list_retry
+import mibosmart.shared.generated.resources.device_list_title
+import mibosmart.shared.generated.resources.device_status_offline
+import mibosmart.shared.generated.resources.device_status_online
+import mibosmart.shared.generated.resources.session_sign_out
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,9 +50,9 @@ internal fun DeviceListScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text(DeviceListTexts.TITLE) },
+                title = { Text(stringResource(Res.string.device_list_title)) },
                 actions = {
-                    TextButton(onClick = onSignOut) { Text(DeviceListTexts.SIGN_OUT) }
+                    TextButton(onClick = onSignOut) { Text(stringResource(Res.string.session_sign_out)) }
                 },
             )
         },
@@ -60,23 +71,23 @@ private fun LoadingDevices(contentPadding: PaddingValues) {
     CenteredMessage(contentPadding) {
         CircularProgressIndicator()
         Spacer(Modifier.height(16.dp))
-        Text(text = DeviceListTexts.LOADING, style = MaterialTheme.typography.bodyMedium)
+        Text(text = stringResource(Res.string.device_list_loading), style = MaterialTheme.typography.bodyMedium)
     }
 }
 
 @Composable
 private fun NoDevices(onReload: () -> Unit, contentPadding: PaddingValues) {
     CenteredMessage(contentPadding) {
-        Text(text = DeviceListTexts.EMPTY_TITLE, style = MaterialTheme.typography.titleMedium)
+        Text(text = stringResource(Res.string.device_list_empty_title), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
         Text(
-            text = DeviceListTexts.EMPTY_MESSAGE,
+            text = stringResource(Res.string.device_list_empty_message),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(24.dp))
-        Button(onClick = onReload) { Text(DeviceListTexts.RELOAD) }
+        Button(onClick = onReload) { Text(stringResource(Res.string.device_list_reload)) }
     }
 }
 
@@ -88,13 +99,13 @@ private fun LoadFailure(
 ) {
     CenteredMessage(contentPadding) {
         Text(
-            text = DeviceListTexts.failureMessage(failure),
+            text = stringResource(failure.messageResource()),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.error,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(24.dp))
-        Button(onClick = onReload) { Text(DeviceListTexts.RETRY) }
+        Button(onClick = onReload) { Text(stringResource(Res.string.device_list_retry)) }
     }
 }
 
@@ -133,13 +144,16 @@ private fun DeviceRow(device: DeviceListItem) {
                 )
             }
             Text(
-                text = DeviceListTexts.statusLabel(device.isOnline),
+                text = stringResource(statusLabel(device.isOnline)),
                 style = MaterialTheme.typography.labelLarge,
                 color = statusColor(device.isOnline),
             )
         }
     }
 }
+
+private fun statusLabel(isOnline: Boolean) =
+    if (isOnline) Res.string.device_status_online else Res.string.device_status_offline
 
 @Composable
 private fun statusColor(isOnline: Boolean): Color =
