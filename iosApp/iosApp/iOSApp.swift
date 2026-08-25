@@ -4,7 +4,7 @@ import Shared
 @main
 struct iOSApp: App {
     init() {
-        SmartHomeKoinKt.startSmartHomeDependencies(logNetworkTraffic: false)
+        SmartHomeKoinIosKt.startSmartHomeDependencies(logNetworkTraffic: false)
     }
 
     var body: some Scene {

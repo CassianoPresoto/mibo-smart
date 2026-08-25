@@ -6,6 +6,6 @@ import intelbras.mobi.smart.di.startSmartHomeDependencies
 class MiboSmartApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        startSmartHomeDependencies(logNetworkTraffic = BuildConfig.DEBUG)
+        startSmartHomeDependencies(context = this, logNetworkTraffic = BuildConfig.DEBUG)
     }
 }

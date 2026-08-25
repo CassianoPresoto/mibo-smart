@@ -33,6 +33,7 @@ jobs:
           ./gradlew
           :shared:domain:testAndroidHostTest
           :shared:rest:testAndroidHostTest
+          :shared:persistence:testAndroidHostTest
           :shared:business:testAndroidHostTest
           :shared:testAndroidHostTest
           --stacktrace
@@ -81,6 +82,10 @@ jobs:
 
   iosApp:
     name: iosApp
+    # Runner macOS custa 10x por minuto de cota, contra 1x dos jobs Linux, entao o alvo iOS
+    # roda so no portao de entrada da main. Consequencia a assumir: PR para develop nao verifica
+    # iOS: alvos Apple so compilam em macOS, e o job shared cobre apenas Android/JVM.
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7
@@ -97,7 +102,9 @@ jobs:
       - name: Testes unitarios iOS
         run: >
           ./gradlew
+          :shared:domain:iosSimulatorArm64Test
           :shared:rest:iosSimulatorArm64Test
+          :shared:persistence:iosSimulatorArm64Test
           :shared:business:iosSimulatorArm64Test
           :shared:iosSimulatorArm64Test
           --stacktrace
