@@ -12,6 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import mibosmart.shared.generated.resources.Res
+import mibosmart.shared.generated.resources.token_entry_checking_session
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun StoredSessionCheck(modifier: Modifier = Modifier) {
@@ -22,6 +25,9 @@ internal fun StoredSessionCheck(modifier: Modifier = Modifier) {
     ) {
         CircularProgressIndicator()
         Spacer(Modifier.height(16.dp))
-        Text(text = TokenEntryTexts.CHECKING_SESSION, style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text = stringResource(Res.string.token_entry_checking_session),
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
 }
