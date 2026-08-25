@@ -31,6 +31,20 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import mibosmart.shared.generated.resources.Res
+import mibosmart.shared.generated.resources.app_name
+import mibosmart.shared.generated.resources.session_active_title
+import mibosmart.shared.generated.resources.session_active_validity
+import mibosmart.shared.generated.resources.session_sign_out
+import mibosmart.shared.generated.resources.token_entry_checking_session
+import mibosmart.shared.generated.resources.token_entry_hide
+import mibosmart.shared.generated.resources.token_entry_label
+import mibosmart.shared.generated.resources.token_entry_show
+import mibosmart.shared.generated.resources.token_entry_submit
+import mibosmart.shared.generated.resources.token_entry_submitting
+import mibosmart.shared.generated.resources.token_entry_subtitle
+import mibosmart.shared.generated.resources.token_entry_where_to_find
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun TokenEntryScreen(
@@ -61,7 +75,7 @@ internal fun TokenEntryScreen(
 private fun CheckingSession() {
     CircularProgressIndicator()
     Spacer(Modifier.height(16.dp))
-    Text(text = TokenEntryTexts.CHECKING_SESSION, style = MaterialTheme.typography.bodyMedium)
+    Text(text = stringResource(Res.string.token_entry_checking_session), style = MaterialTheme.typography.bodyMedium)
 }
 
 @Composable
@@ -70,10 +84,10 @@ private fun TokenForm(
     onTokenChanged: (String) -> Unit,
     onSubmit: () -> Unit,
 ) {
-    Text(text = TokenEntryTexts.TITLE, style = MaterialTheme.typography.headlineMedium)
+    Text(text = stringResource(Res.string.app_name), style = MaterialTheme.typography.headlineMedium)
     Spacer(Modifier.height(8.dp))
     Text(
-        text = TokenEntryTexts.SUBTITLE,
+        text = stringResource(Res.string.token_entry_subtitle),
         style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -85,8 +99,8 @@ private fun TokenForm(
         value = uiState.token,
         onValueChange = onTokenChanged,
         modifier = Modifier.fillMaxWidth(),
-        label = { Text(TokenEntryTexts.TOKEN_LABEL) },
-        supportingText = { Text(TokenEntryTexts.WHERE_TO_FIND) },
+        label = { Text(stringResource(Res.string.token_entry_label)) },
+        supportingText = { Text(stringResource(Res.string.token_entry_where_to_find)) },
         isError = uiState.failure != null,
         singleLine = true,
         enabled = !uiState.isSubmitting,
@@ -101,7 +115,7 @@ private fun TokenForm(
                 enabled = uiState.token.isNotEmpty(),
             ) {
                 Text(
-                    if (isTokenVisible) TokenEntryTexts.HIDE_TOKEN else TokenEntryTexts.SHOW_TOKEN
+                    if (isTokenVisible) stringResource(Res.string.token_entry_hide) else stringResource(Res.string.token_entry_show)
                 )
             }
         },
@@ -117,7 +131,7 @@ private fun TokenForm(
     uiState.failure?.let { failure ->
         Spacer(Modifier.height(8.dp))
         Text(
-            text = TokenEntryTexts.failureMessage(failure),
+            text = stringResource(failure.messageResource()),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.error,
             modifier = Modifier.fillMaxWidth(),
@@ -130,21 +144,21 @@ private fun TokenForm(
         modifier = Modifier.fillMaxWidth(),
         enabled = uiState.canSubmit,
     ) {
-        Text(if (uiState.isSubmitting) TokenEntryTexts.SUBMITTING else TokenEntryTexts.SUBMIT)
+        Text(if (uiState.isSubmitting) stringResource(Res.string.token_entry_submitting) else stringResource(Res.string.token_entry_submit))
     }
 }
 
 @Composable
 private fun ActiveSession(onSignOut: () -> Unit) {
-    Text(text = TokenEntryTexts.CONNECTED_TITLE, style = MaterialTheme.typography.headlineSmall)
+    Text(text = stringResource(Res.string.session_active_title), style = MaterialTheme.typography.headlineSmall)
     Spacer(Modifier.height(8.dp))
     Text(
-        text = TokenEntryTexts.SESSION_VALIDITY,
+        text = stringResource(Res.string.session_active_validity),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Spacer(Modifier.height(24.dp))
     TextButton(onClick = onSignOut) {
-        Text(TokenEntryTexts.SIGN_OUT)
+        Text(stringResource(Res.string.session_sign_out))
     }
 }

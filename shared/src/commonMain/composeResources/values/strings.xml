@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">Mibo Smart</string>
+
+    <string name="token_entry_subtitle">Cole o token de acesso para ver seus dispositivos.</string>
+    <string name="token_entry_where_to_find">Gere o token em open-casainteligente.intelbras.com.br, no menu Contas → Token Temporário.</string>
+    <string name="token_entry_label">Token de acesso</string>
+    <string name="token_entry_show">Mostrar</string>
+    <string name="token_entry_hide">Ocultar</string>
+    <string name="token_entry_submit">Entrar</string>
+    <string name="token_entry_submitting">Validando o token…</string>
+    <string name="token_entry_checking_session">Verificando a sessão salva…</string>
+
+    <string name="session_active_title">Sessão ativa</string>
+    <string name="session_active_validity">O token vale por 2 horas a partir da entrada.</string>
+    <string name="session_sign_out">Sair</string>
+
+    <string name="token_failure_empty">Cole o token de acesso para continuar.</string>
+    <string name="token_failure_invalid">Token inválido ou expirado. Gere um novo no portal e cole aqui.</string>
+    <string name="token_failure_expired_session">Sua sessão expirou depois de 2 horas. Cole um token novo para continuar.</string>
+    <string name="token_failure_network">Sem conexão com a plataforma. Verifique a internet e tente de novo.</string>
+    <string name="token_failure_unexpected">Não foi possível validar o token agora. Tente novamente em instantes.</string>
+</resources>
