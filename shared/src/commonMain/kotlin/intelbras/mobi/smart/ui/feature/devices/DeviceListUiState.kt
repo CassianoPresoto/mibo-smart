@@ -1,34 +1,47 @@
 package intelbras.mobi.smart.ui.feature.devices
 
-import intelbras.mobi.smart.domain.device.model.DeviceKind
+import androidx.compose.runtime.Immutable
 
-sealed interface DeviceListUiState {
-    data object Loading : DeviceListUiState
+enum class DeviceOrigin { Linked, Shared }
 
-    data class Loaded(val devices: List<DeviceListItem>) : DeviceListUiState
+enum class DeviceFilter { All, Linked, Shared }
 
-    data object Empty : DeviceListUiState
+enum class DeviceKind {
+    Camera,
+    Lock,
+    Light,
+    Sensor,
+    Other,
+    ;
 
-    data class Failed(val failure: DeviceListFailure) : DeviceListUiState
+    val isOpenable: Boolean get() = this == Camera || this == Lock
 }
 
-data class DeviceListItem(
-    val serialNumber: String,
-    val address: String,
-    val productId: String,
+@Immutable
+data class DeviceUiModel(
+    val id: String,
     val name: String,
-    val model: String,
-    val isOnline: Boolean,
+    val serialNumber: String?,
     val kind: DeviceKind,
+    val origin: DeviceOrigin,
+    val isOnline: Boolean,
+    val productId: String,
+    val model: String,
 ) {
-    val hasScreenOfItsOwn: Boolean
-        get() = kind == DeviceKind.Camera || kind == DeviceKind.Lock
+    val isOpenable: Boolean get() = kind.isOpenable && isOnline
 }
 
-sealed interface DeviceListFailure {
-    data object InvalidToken : DeviceListFailure
+@Immutable
+data class DeviceListUiState(
+    val devices: List<DeviceUiModel> = emptyList(),
+    val filter: DeviceFilter = DeviceFilter.All,
+    val isLoading: Boolean = false,
+    val isLoadingMore: Boolean = false,
+    val hasMore: Boolean = false,
+    val failure: DeviceListFailure? = null,
+    val accountInitials: String = "",
+) {
+    val isEmpty: Boolean get() = !isLoading && failure == null && devices.isEmpty()
 
-    data object NetworkUnavailable : DeviceListFailure
-
-    data object Unexpected : DeviceListFailure
+    val showList: Boolean get() = !isLoading && failure == null && devices.isNotEmpty()
 }

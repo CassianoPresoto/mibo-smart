@@ -19,23 +19,6 @@
     <string name="token_failure_network">Sem conexão com a plataforma. Verifique a internet e tente de novo.</string>
     <string name="token_failure_unexpected">Não foi possível validar o token agora. Tente novamente em instantes.</string>
 
-    <string name="device_list_title">Dispositivos</string>
-    <string name="device_list_loading">Buscando seus dispositivos…</string>
-    <string name="device_list_empty_title">Nenhum dispositivo</string>
-    <string name="device_list_empty_message">Esta conta ainda não tem dispositivos vinculados ou compartilhados.</string>
-    <string name="device_list_reload">Atualizar</string>
-    <string name="device_list_retry">Tentar de novo</string>
-    <string name="device_kind_camera">Câmera</string>
-    <string name="device_kind_lock">Fechadura</string>
-    <string name="device_kind_hub">Central</string>
-    <string name="device_kind_unknown">Tipo não reconhecido</string>
-    <string name="device_list_no_action">Sem ação disponível ainda</string>
-    <string name="device_status_online">Online</string>
-    <string name="device_status_offline">Offline</string>
-
-    <string name="device_list_failure_invalid_token">Sua sessão expirou. Saia e cole um token novo para continuar.</string>
-    <string name="device_list_failure_network">Sem conexão com a plataforma. Verifique a internet e tente de novo.</string>
-    <string name="device_list_failure_unexpected">Não foi possível carregar os dispositivos agora. Tente novamente em instantes.</string>
     <string name="live_video_back">Voltar</string>
     <string name="live_video_connecting">Conectando à câmera…</string>
     <string name="live_video_buffering">Carregando o vídeo…</string>
@@ -94,4 +77,43 @@
     <string name="lock_failure_session_expired">Sua sessão expirou. Saia e cole um token novo para continuar.</string>
     <string name="lock_failure_network">Sem conexão com a plataforma. Verifique a internet e tente de novo.</string>
     <string name="lock_failure_unexpected">Não foi possível falar com a fechadura agora. Tente novamente em instantes.</string>
+
+    <string name="devices_eyebrow">Casa Inteligente</string>
+    <string name="devices_title">Dispositivos</string>
+    <string name="devices_account">Conta</string>
+
+    <string name="devices_filter_all">Todos</string>
+    <string name="devices_filter_linked">Vinculados</string>
+    <string name="devices_filter_shared">Compartilhados</string>
+
+    <string name="devices_status_online">Online</string>
+    <string name="devices_status_offline">Offline</string>
+    <string name="devices_badge_shared">Compartilhado</string>
+    <string name="devices_serial">SN %1$s</string>
+    <string name="devices_open">Ver ›</string>
+    <string name="devices_no_action">Sem ação disponível ainda</string>
+    <string name="devices_card_description">%1$s, %2$s, %3$s</string>
+
+    <string name="devices_kind_camera">Câmera</string>
+    <string name="devices_kind_lock">Fechadura</string>
+    <string name="devices_kind_light">Lâmpada</string>
+    <string name="devices_kind_sensor">Sensor</string>
+    <string name="devices_kind_other">Dispositivo</string>
+    <string name="devices_description_with_model">%1$s · %2$s</string>
+
+    <string name="devices_loading">Buscando seus dispositivos…</string>
+    <string name="devices_loading_more">Carregando mais dispositivos…</string>
+
+    <string name="devices_empty_title">Nenhum dispositivo</string>
+    <string name="devices_empty_body">Esta conta ainda não tem dispositivos vinculados ou compartilhados.</string>
+    <string name="devices_empty_action">Atualizar</string>
+
+    <string name="devices_error_retry">Tentar de novo</string>
+    <string name="devices_error_network_title">Sem conexão</string>
+    <string name="devices_error_network_body">Sem conexão com a plataforma. Verifique a internet e tente de novo.</string>
+    <string name="devices_error_expired_title">Sessão expirada</string>
+    <string name="devices_error_expired_body">O token de acesso expirou. Gere um novo na plataforma e entre de novo.</string>
+    <string name="devices_error_expired_action">Inserir novo token</string>
+    <string name="devices_error_generic_title">Algo deu errado</string>
+    <string name="devices_error_generic_body">A plataforma respondeu de um jeito inesperado. Tente de novo em instantes.</string>
 </resources>

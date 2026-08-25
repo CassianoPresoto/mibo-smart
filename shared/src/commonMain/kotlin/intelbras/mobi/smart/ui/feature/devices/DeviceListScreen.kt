@@ -1,282 +1,325 @@
 package intelbras.mobi.smart.ui.feature.devices
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import intelbras.mobi.smart.domain.device.model.DeviceKind
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import intelbras.mobi.smart.ui.component.MiboAccountAvatar
+import intelbras.mobi.smart.ui.component.MiboErrorMark
+import intelbras.mobi.smart.ui.component.MiboFeedbackState
+import intelbras.mobi.smart.ui.component.MiboFilterChip
+import intelbras.mobi.smart.ui.component.MiboSkeletonList
+import intelbras.mobi.smart.ui.theme.MiboSmartSize
+import intelbras.mobi.smart.ui.theme.MiboTheme
 import mibosmart.shared.generated.resources.Res
-import mibosmart.shared.generated.resources.device_list_empty_message
-import mibosmart.shared.generated.resources.device_list_no_action
-import mibosmart.shared.generated.resources.device_list_empty_title
-import mibosmart.shared.generated.resources.device_list_loading
-import mibosmart.shared.generated.resources.device_list_reload
-import mibosmart.shared.generated.resources.device_list_retry
-import mibosmart.shared.generated.resources.device_list_title
-import mibosmart.shared.generated.resources.device_status_offline
-import mibosmart.shared.generated.resources.device_status_online
-import mibosmart.shared.generated.resources.session_sign_out
+import mibosmart.shared.generated.resources.devices_account
+import mibosmart.shared.generated.resources.devices_empty_action
+import mibosmart.shared.generated.resources.devices_empty_body
+import mibosmart.shared.generated.resources.devices_empty_title
+import mibosmart.shared.generated.resources.devices_eyebrow
+import mibosmart.shared.generated.resources.devices_filter_all
+import mibosmart.shared.generated.resources.devices_filter_linked
+import mibosmart.shared.generated.resources.devices_filter_shared
+import mibosmart.shared.generated.resources.devices_loading
+import mibosmart.shared.generated.resources.devices_loading_more
+import mibosmart.shared.generated.resources.devices_title
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun DeviceListScreen(
     uiState: DeviceListUiState,
-    onReload: () -> Unit,
-    onDeviceSelected: (DeviceListItem) -> Unit,
-    onSignOut: () -> Unit,
+    onFilterSelected: (DeviceFilter) -> Unit,
+    onDeviceClick: (DeviceUiModel) -> Unit,
+    onRetry: () -> Unit,
+    onLoadMore: () -> Unit,
+    onAccountClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.device_list_title)) },
-                actions = {
-                    TextButton(onClick = onSignOut) { Text(stringResource(Res.string.session_sign_out)) }
-                },
-            )
-        },
-    ) { contentPadding ->
-        when (uiState) {
-            DeviceListUiState.Loading -> LoadingDevices(contentPadding)
-            is DeviceListUiState.Loaded ->
-                DeviceRows(uiState.devices, onDeviceSelected, contentPadding)
-            DeviceListUiState.Empty -> NoDevices(onReload, contentPadding)
-            is DeviceListUiState.Failed -> LoadFailure(uiState.failure, onReload, contentPadding)
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MiboTheme.colors.background)
+            .statusBarsPadding(),
+    ) {
+        DeviceListHeader(
+            accountInitials = uiState.accountInitials,
+            onAccountClick = onAccountClick,
+        )
+
+        DeviceFilterRow(
+            selected = uiState.filter,
+            onFilterSelected = onFilterSelected,
+        )
+
+        Box(Modifier.weight(1f)) {
+            when {
+                uiState.isLoading -> MiboSkeletonList(
+                    label = stringResource(Res.string.devices_loading),
+                    modifier = Modifier.padding(horizontal = MiboSmartSize.listPadding),
+                    itemCount = 2,
+                )
+
+                uiState.failure != null -> MiboFeedbackState(
+                    title = stringResource(uiState.failure.titleResource()),
+                    body = stringResource(uiState.failure.bodyResource()),
+                    actionLabel = stringResource(uiState.failure.actionResource()),
+                    onAction = onRetry,
+                    mark = { MiboErrorMark() },
+                )
+
+                uiState.isEmpty -> MiboFeedbackState(
+                    title = stringResource(Res.string.devices_empty_title),
+                    body = stringResource(Res.string.devices_empty_body),
+                    actionLabel = stringResource(Res.string.devices_empty_action),
+                    onAction = onRetry,
+                )
+
+                else -> DeviceList(
+                    devices = uiState.devices,
+                    isLoadingMore = uiState.isLoadingMore,
+                    onDeviceClick = onDeviceClick,
+                    onLoadMore = onLoadMore,
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun LoadingDevices(contentPadding: PaddingValues) {
-    CenteredMessage(contentPadding) {
-        CircularProgressIndicator()
-        Spacer(Modifier.height(16.dp))
-        Text(text = stringResource(Res.string.device_list_loading), style = MaterialTheme.typography.bodyMedium)
-    }
-}
-
-@Composable
-private fun NoDevices(onReload: () -> Unit, contentPadding: PaddingValues) {
-    CenteredMessage(contentPadding) {
-        Text(text = stringResource(Res.string.device_list_empty_title), style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = stringResource(Res.string.device_list_empty_message),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(24.dp))
-        Button(onClick = onReload) { Text(stringResource(Res.string.device_list_reload)) }
-    }
-}
-
-@Composable
-private fun LoadFailure(
-    failure: DeviceListFailure,
-    onReload: () -> Unit,
-    contentPadding: PaddingValues,
+private fun DeviceListHeader(
+    accountInitials: String,
+    onAccountClick: () -> Unit,
 ) {
-    CenteredMessage(contentPadding) {
-        Text(
-            text = stringResource(failure.messageResource()),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.error,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(24.dp))
-        Button(onClick = onReload) { Text(stringResource(Res.string.device_list_retry)) }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                start = MiboSmartSize.listPadding,
+                end = MiboSmartSize.listPadding,
+                top = 18.dp,
+                bottom = 12.dp,
+            ),
+        verticalAlignment = Alignment.Bottom,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = stringResource(Res.string.devices_eyebrow),
+                style = MiboTheme.typography.caption.copy(
+                    fontSize = 12.sp,
+                    letterSpacing = 0.2.sp,
+                ),
+                color = MiboTheme.colors.muted,
+            )
+            Text(
+                text = stringResource(Res.string.devices_title),
+                style = MiboTheme.typography.display,
+                color = MiboTheme.colors.text,
+            )
+        }
+        if (accountInitials.isNotBlank()) {
+            MiboAccountAvatar(
+                initials = accountInitials,
+                description = stringResource(Res.string.devices_account),
+                onClick = onAccountClick,
+            )
+        }
     }
 }
 
 @Composable
-private fun DeviceRows(
-    devices: List<DeviceListItem>,
-    onDeviceSelected: (DeviceListItem) -> Unit,
-    contentPadding: PaddingValues,
+private fun DeviceFilterRow(
+    selected: DeviceFilter,
+    onFilterSelected: (DeviceFilter) -> Unit,
 ) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = MiboSmartSize.listPadding)
+            .padding(top = 4.dp, bottom = 14.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        DeviceFilter.entries.forEach { filter ->
+            MiboFilterChip(
+                label = stringResource(filter.labelResource()),
+                selected = filter == selected,
+                onClick = { onFilterSelected(filter) },
+            )
+        }
+    }
+}
+
+private const val LOAD_MORE_THRESHOLD = 4
+
+@Composable
+private fun DeviceList(
+    devices: List<DeviceUiModel>,
+    isLoadingMore: Boolean,
+    onDeviceClick: (DeviceUiModel) -> Unit,
+    onLoadMore: () -> Unit,
+) {
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.layoutInfo }.collect { layoutInfo ->
+            val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: return@collect
+            if (lastVisible >= layoutInfo.totalItemsCount - LOAD_MORE_THRESHOLD) {
+                onLoadMore()
+            }
+        }
+    }
+
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(contentPadding),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+        state = listState,
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            start = MiboSmartSize.listPadding,
+            end = MiboSmartSize.listPadding,
+            bottom = 12.dp,
+        ),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        items(items = devices, key = { it.serialNumber }) { device ->
-            DeviceRow(device, onDeviceSelected)
+        items(items = devices, key = { it.id }) { device ->
+            DeviceCard(device = device, onClick = onDeviceClick)
         }
-    }
-}
 
-@Composable
-private fun DeviceRow(device: DeviceListItem, onDeviceSelected: (DeviceListItem) -> Unit) {
-    Card(
-        onClick = { onDeviceSelected(device) },
-        enabled = device.hasScreenOfItsOwn,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = device.name, style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = stringResource(device.kind.labelResource()),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Text(
-                    text = device.model,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = device.serialNumber,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                if (!device.hasScreenOfItsOwn) {
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(Res.string.device_list_no_action),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+        if (isLoadingMore) {
+            item(key = "loading-more") {
+                DeviceListLoadingMore()
             }
-            Text(
-                text = stringResource(statusLabel(device.isOnline)),
-                style = MaterialTheme.typography.labelLarge,
-                color = statusColor(device.isOnline),
-            )
         }
     }
 }
 
-private fun statusLabel(isOnline: Boolean) =
-    if (isOnline) Res.string.device_status_online else Res.string.device_status_offline
-
 @Composable
-private fun statusColor(isOnline: Boolean): Color =
-    if (isOnline) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-
-@Composable
-private fun CenteredMessage(
-    contentPadding: PaddingValues,
-    content: @Composable () -> Unit,
-) {
-    Column(
+private fun DeviceListLoadingMore() {
+    val description = stringResource(Res.string.devices_loading_more)
+    Row(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(contentPadding)
-            .padding(horizontal = 32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .fillMaxWidth()
+            .padding(vertical = 12.dp)
+            .semantics { contentDescription = description },
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        content()
+        CircularProgressIndicator(
+            modifier = Modifier.size(20.dp),
+            strokeWidth = 2.dp,
+            color = MiboTheme.colors.primary,
+        )
     }
 }
 
-@Preview
-@Composable
-private fun DeviceListScreenPreview() {
-    PreviewScreen(
-        DeviceListUiState.Loaded(
-            listOf(
-                previewDevice(
-                    serialNumber = "KAYK0109140D9",
-                    name = "iM3-C-40D9",
-                    model = "iM3-C",
-                    kind = DeviceKind.Camera,
-                ),
-                previewDevice(
-                    serialNumber = "08B95FFFFE02116A",
-                    name = "MFR 2020 V-116A",
-                    model = "MFR 2020 V",
-                    kind = DeviceKind.Lock,
-                ),
-                previewDevice(
-                    serialNumber = "OGQ0010782013",
-                    name = "MCA 1002-2013",
-                    model = "IOT-ZG2-IB",
-                    kind = DeviceKind.Hub,
-                    isOnline = false,
-                ),
-            ),
-        ),
-    )
+private fun DeviceFilter.labelResource(): StringResource = when (this) {
+    DeviceFilter.All -> Res.string.devices_filter_all
+    DeviceFilter.Linked -> Res.string.devices_filter_linked
+    DeviceFilter.Shared -> Res.string.devices_filter_shared
 }
+
+private val previewDevices = listOf(
+    DeviceUiModel(
+        id = "1",
+        name = "Câmera da sala",
+        serialNumber = "ABC123456",
+        kind = DeviceKind.Camera,
+        origin = DeviceOrigin.Linked,
+        isOnline = true,
+        productId = "PRODUTO-1",
+        model = "iM5 S",
+    ),
+    DeviceUiModel(
+        id = "2",
+        name = "Fechadura da porta",
+        serialNumber = "XYZ987654",
+        kind = DeviceKind.Lock,
+        origin = DeviceOrigin.Shared,
+        isOnline = false,
+        productId = "PRODUTO-2",
+        model = "Smart Lock",
+    ),
+)
 
 @Preview
 @Composable
 private fun DeviceListScreenLoadingPreview() {
-    PreviewScreen(DeviceListUiState.Loading)
+    MiboTheme {
+        DeviceListScreen(
+            uiState = DeviceListUiState(isLoading = true),
+            onFilterSelected = {},
+            onDeviceClick = {},
+            onRetry = {},
+            onLoadMore = {},
+            onAccountClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DeviceListScreenLoadedPreview() {
+    MiboTheme {
+        DeviceListScreen(
+            uiState = DeviceListUiState(devices = previewDevices, accountInitials = "MS"),
+            onFilterSelected = {},
+            onDeviceClick = {},
+            onRetry = {},
+            onLoadMore = {},
+            onAccountClick = {},
+        )
+    }
 }
 
 @Preview
 @Composable
 private fun DeviceListScreenEmptyPreview() {
-    PreviewScreen(DeviceListUiState.Empty)
+    MiboTheme {
+        DeviceListScreen(
+            uiState = DeviceListUiState(),
+            onFilterSelected = {},
+            onDeviceClick = {},
+            onRetry = {},
+            onLoadMore = {},
+            onAccountClick = {},
+        )
+    }
 }
 
 @Preview
 @Composable
-private fun DeviceListScreenFailedPreview() {
-    PreviewScreen(DeviceListUiState.Failed(DeviceListFailure.NetworkUnavailable))
-}
-
-@Composable
-private fun PreviewScreen(uiState: DeviceListUiState) {
-    MaterialTheme {
-        Surface {
-            DeviceListScreen(
-                uiState = uiState,
-                onReload = {},
-                onDeviceSelected = {},
-                onSignOut = {},
-            )
-        }
+private fun DeviceListScreenFailurePreview() {
+    MiboTheme {
+        DeviceListScreen(
+            uiState = DeviceListUiState(failure = DeviceListFailure.Network),
+            onFilterSelected = {},
+            onDeviceClick = {},
+            onRetry = {},
+            onLoadMore = {},
+            onAccountClick = {},
+        )
     }
 }
-
-private fun previewDevice(
-    serialNumber: String,
-    name: String,
-    model: String,
-    kind: DeviceKind,
-    isOnline: Boolean = true,
-) = DeviceListItem(
-    serialNumber = serialNumber,
-    address = serialNumber,
-    productId = "",
-    name = name,
-    model = model,
-    isOnline = isOnline,
-    kind = kind,
-)
