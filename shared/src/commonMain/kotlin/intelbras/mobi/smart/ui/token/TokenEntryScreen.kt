@@ -13,7 +13,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -34,10 +33,9 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 internal fun TokenEntryScreen(
-    uiState: TokenEntryUiState,
+    uiState: TokenEntryUiState.AwaitingToken,
     onTokenChanged: (String) -> Unit,
     onSubmit: () -> Unit,
-    onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -49,102 +47,67 @@ internal fun TokenEntryScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        when (uiState) {
-            TokenEntryUiState.CheckingStoredSession -> CheckingSession()
-            is TokenEntryUiState.AwaitingToken -> TokenForm(uiState, onTokenChanged, onSubmit)
-            is TokenEntryUiState.Authenticated -> ActiveSession(onSignOut)
-        }
-    }
-}
-
-@Composable
-private fun CheckingSession() {
-    CircularProgressIndicator()
-    Spacer(Modifier.height(16.dp))
-    Text(text = TokenEntryTexts.CHECKING_SESSION, style = MaterialTheme.typography.bodyMedium)
-}
-
-@Composable
-private fun TokenForm(
-    uiState: TokenEntryUiState.AwaitingToken,
-    onTokenChanged: (String) -> Unit,
-    onSubmit: () -> Unit,
-) {
-    Text(text = TokenEntryTexts.TITLE, style = MaterialTheme.typography.headlineMedium)
-    Spacer(Modifier.height(8.dp))
-    Text(
-        text = TokenEntryTexts.SUBTITLE,
-        style = MaterialTheme.typography.bodyLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(Modifier.height(24.dp))
-
-    var isTokenVisible by rememberSaveable { mutableStateOf(false) }
-
-    OutlinedTextField(
-        value = uiState.token,
-        onValueChange = onTokenChanged,
-        modifier = Modifier.fillMaxWidth(),
-        label = { Text(TokenEntryTexts.TOKEN_LABEL) },
-        supportingText = { Text(TokenEntryTexts.WHERE_TO_FIND) },
-        isError = uiState.failure != null,
-        singleLine = true,
-        enabled = !uiState.isSubmitting,
-        visualTransformation = if (isTokenVisible) {
-            VisualTransformation.None
-        } else {
-            PasswordVisualTransformation()
-        },
-        trailingIcon = {
-            TextButton(
-                onClick = { isTokenVisible = !isTokenVisible },
-                enabled = uiState.token.isNotEmpty(),
-            ) {
-                Text(
-                    if (isTokenVisible) TokenEntryTexts.HIDE_TOKEN else TokenEntryTexts.SHOW_TOKEN
-                )
-            }
-        },
-        keyboardOptions = KeyboardOptions(
-            capitalization = KeyboardCapitalization.None,
-            autoCorrectEnabled = false,
-            keyboardType = KeyboardType.Password,
-            imeAction = ImeAction.Go,
-        ),
-        keyboardActions = KeyboardActions(onGo = { onSubmit() }),
-    )
-
-    uiState.failure?.let { failure ->
+        Text(text = TokenEntryTexts.TITLE, style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(8.dp))
         Text(
-            text = TokenEntryTexts.failureMessage(failure),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.fillMaxWidth(),
+            text = TokenEntryTexts.SUBTITLE,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-    }
+        Spacer(Modifier.height(24.dp))
 
-    Spacer(Modifier.height(24.dp))
-    Button(
-        onClick = onSubmit,
-        modifier = Modifier.fillMaxWidth(),
-        enabled = uiState.canSubmit,
-    ) {
-        Text(if (uiState.isSubmitting) TokenEntryTexts.SUBMITTING else TokenEntryTexts.SUBMIT)
-    }
-}
+        var isTokenVisible by rememberSaveable { mutableStateOf(false) }
 
-@Composable
-private fun ActiveSession(onSignOut: () -> Unit) {
-    Text(text = TokenEntryTexts.CONNECTED_TITLE, style = MaterialTheme.typography.headlineSmall)
-    Spacer(Modifier.height(8.dp))
-    Text(
-        text = TokenEntryTexts.SESSION_VALIDITY,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(Modifier.height(24.dp))
-    TextButton(onClick = onSignOut) {
-        Text(TokenEntryTexts.SIGN_OUT)
+        OutlinedTextField(
+            value = uiState.token,
+            onValueChange = onTokenChanged,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(TokenEntryTexts.TOKEN_LABEL) },
+            supportingText = { Text(TokenEntryTexts.WHERE_TO_FIND) },
+            isError = uiState.failure != null,
+            singleLine = true,
+            enabled = !uiState.isSubmitting,
+            visualTransformation = if (isTokenVisible) {
+                VisualTransformation.None
+            } else {
+                PasswordVisualTransformation()
+            },
+            trailingIcon = {
+                TextButton(
+                    onClick = { isTokenVisible = !isTokenVisible },
+                    enabled = uiState.token.isNotEmpty(),
+                ) {
+                    Text(
+                        if (isTokenVisible) TokenEntryTexts.HIDE_TOKEN else TokenEntryTexts.SHOW_TOKEN
+                    )
+                }
+            },
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.None,
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Go,
+            ),
+            keyboardActions = KeyboardActions(onGo = { onSubmit() }),
+        )
+
+        uiState.failure?.let { failure ->
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = TokenEntryTexts.failureMessage(failure),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        Spacer(Modifier.height(24.dp))
+        Button(
+            onClick = onSubmit,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = uiState.canSubmit,
+        ) {
+            Text(if (uiState.isSubmitting) TokenEntryTexts.SUBMITTING else TokenEntryTexts.SUBMIT)
+        }
     }
 }

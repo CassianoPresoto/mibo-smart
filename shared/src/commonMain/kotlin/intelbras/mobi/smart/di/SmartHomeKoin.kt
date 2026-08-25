@@ -2,6 +2,7 @@ package intelbras.mobi.smart.di
 
 import intelbras.mobi.smart.business.di.businessModule
 import intelbras.mobi.smart.persistence.SmartHomePersistenceFactory
+import intelbras.mobi.smart.ui.devices.DeviceListViewModel
 import intelbras.mobi.smart.ui.token.TokenEntryViewModel
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
@@ -19,4 +20,5 @@ fun startSmartHomeDependencies(
 
 private fun presentationModule(): Module = module {
     viewModelOf(::TokenEntryViewModel)
+    viewModelOf(::DeviceListViewModel)
 }
