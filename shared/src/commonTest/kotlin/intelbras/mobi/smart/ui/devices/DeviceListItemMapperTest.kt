@@ -30,6 +30,14 @@ class DeviceListItemMapperTest {
     }
 
     @Test
+    fun `carries what identifies the device for the next screen`() {
+        val item = device(serialNumber = "SERIAL-9", productId = "PRODUTO-9").toListItem()
+
+        assertEquals("SERIAL-9", item.serialNumber)
+        assertEquals("PRODUTO-9", item.productId)
+    }
+
+    @Test
     fun `marks the device as online only when the platform says so`() {
         assertTrue(device(status = DeviceStatus.Online).toListItem().isOnline)
         assertFalse(device(status = DeviceStatus.Offline).toListItem().isOnline)

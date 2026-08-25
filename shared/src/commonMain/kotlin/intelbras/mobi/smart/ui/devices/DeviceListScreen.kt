@@ -43,6 +43,7 @@ import org.jetbrains.compose.resources.stringResource
 internal fun DeviceListScreen(
     uiState: DeviceListUiState,
     onReload: () -> Unit,
+    onDeviceSelected: (DeviceListItem) -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -59,7 +60,8 @@ internal fun DeviceListScreen(
     ) { contentPadding ->
         when (uiState) {
             DeviceListUiState.Loading -> LoadingDevices(contentPadding)
-            is DeviceListUiState.Loaded -> DeviceRows(uiState.devices, contentPadding)
+            is DeviceListUiState.Loaded ->
+                DeviceRows(uiState.devices, onDeviceSelected, contentPadding)
             DeviceListUiState.Empty -> NoDevices(onReload, contentPadding)
             is DeviceListUiState.Failed -> LoadFailure(uiState.failure, onReload, contentPadding)
         }
@@ -110,21 +112,28 @@ private fun LoadFailure(
 }
 
 @Composable
-private fun DeviceRows(devices: List<DeviceListItem>, contentPadding: PaddingValues) {
+private fun DeviceRows(
+    devices: List<DeviceListItem>,
+    onDeviceSelected: (DeviceListItem) -> Unit,
+    contentPadding: PaddingValues,
+) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(contentPadding),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         items(items = devices, key = { it.serialNumber }) { device ->
-            DeviceRow(device)
+            DeviceRow(device, onDeviceSelected)
         }
     }
 }
 
 @Composable
-private fun DeviceRow(device: DeviceListItem) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+private fun DeviceRow(device: DeviceListItem, onDeviceSelected: (DeviceListItem) -> Unit) {
+    Card(
+        onClick = { onDeviceSelected(device) },
+        modifier = Modifier.fillMaxWidth(),
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,

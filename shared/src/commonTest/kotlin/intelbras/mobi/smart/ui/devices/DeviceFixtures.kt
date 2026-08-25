@@ -8,6 +8,7 @@ import intelbras.mobi.smart.domain.device.model.DeviceStatus
 
 internal fun device(
     serialNumber: String = "SERIAL-1",
+    productId: String = "PRODUTO-1",
     name: String = "Câmera da sala",
     model: String = "iM3-C",
     status: DeviceStatus = DeviceStatus.Online,
@@ -16,6 +17,7 @@ internal fun device(
     name = name,
     model = model,
     status = status,
+    productId = productId,
 )
 
 internal fun pageOf(vararg devices: Device) = DeviceListPage(

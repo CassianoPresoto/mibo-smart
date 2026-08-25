@@ -7,6 +7,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 internal fun DeviceListRoute(
+    onDeviceSelected: (DeviceListItem) -> Unit,
     onSignOut: () -> Unit,
     viewModel: DeviceListViewModel = koinViewModel(),
 ) {
@@ -15,6 +16,7 @@ internal fun DeviceListRoute(
     DeviceListScreen(
         uiState = uiState,
         onReload = viewModel::onReload,
+        onDeviceSelected = onDeviceSelected,
         onSignOut = onSignOut,
     )
 }
