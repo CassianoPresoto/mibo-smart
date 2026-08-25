@@ -62,7 +62,9 @@ internal fun LiveVideoScreen(
                 .padding(contentPadding)
                 .background(Color.Black),
         ) {
-            VideoPlayerSurface(player = player, modifier = Modifier.fillMaxSize())
+            if (uiState == LiveVideoUiState.Playing) {
+                VideoPlayerSurface(player = player, modifier = Modifier.fillMaxSize())
+            }
 
             when (uiState) {
                 LiveVideoUiState.Connecting -> WaitingMessage(Res.string.live_video_connecting)

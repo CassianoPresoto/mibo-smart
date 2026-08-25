@@ -20,6 +20,10 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
+/* Begin PBXBuildFile section */
+		3C4D5E6F708192A3B4C5D6E7 /* VLCKit in Frameworks */ = {isa = PBXBuildFile; productRef = 2B3C4D5E6F708192A3B4C5D6 /* VLCKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		DB6CABA7C5D1FB6F63C2CFED /* iosApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -41,6 +45,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3C4D5E6F708192A3B4C5D6E7 /* VLCKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -85,6 +90,7 @@
 			);
 			name = iosApp;
 			packageProductDependencies = (
+				2B3C4D5E6F708192A3B4C5D6 /* VLCKit */,
 			);
 			productName = iosApp;
 			productReference = 077C2969C019C91303FEC32E /* Mibo Smart.app */;
@@ -114,6 +120,9 @@
 			);
 			mainGroup = C109C39A0919335FBF7509D8;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1A2B3C4D5E6F708192A3B4C5 /* XCRemoteSwiftPackageReference "VLCKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AEE5DFBD14BE9989539D972E /* Products */;
 			projectDirPath = "";
@@ -368,6 +377,24 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+/* Begin XCRemoteSwiftPackageReference section */
+		1A2B3C4D5E6F708192A3B4C5 /* XCRemoteSwiftPackageReference "VLCKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://code.videolan.org/videolan/VLCKit.git";
+			requirement = {
+				kind = revision;
+				revision = e3774eb25c62c902e9066ba267e6416d82e83382;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		2B3C4D5E6F708192A3B4C5D6 /* VLCKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1A2B3C4D5E6F708192A3B4C5 /* XCRemoteSwiftPackageReference "VLCKit" */;
+			productName = VLCKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 91F6D42A1D643EFFC684F52D /* Project object */;
 }

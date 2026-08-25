@@ -8,9 +8,10 @@ import intelbras.mobi.smart.domain.device.model.DeviceReference
 import intelbras.mobi.smart.domain.playback.VideoPlayer
 import intelbras.mobi.smart.domain.playback.model.PlaybackSource
 import intelbras.mobi.smart.domain.playback.model.VideoPlayerEvent
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 internal fun liveVideo(streamUrl: String, sessionId: String) = DeviceConnection.LiveVideo(
     LiveVideoSession(streamUrl = streamUrl, sessionId = sessionId, quotaGb = 1.0),
@@ -37,18 +38,26 @@ internal class FakeDeviceConnector(vararg results: DeviceConnectionResult) : Dev
     }
 }
 
-internal class FakeVideoPlayer : VideoPlayer {
+internal class FakeVideoPlayer(
+    private val reportedOnStart: List<VideoPlayerEvent> = emptyList(),
+) : VideoPlayer {
 
-    private val emitted = Channel<VideoPlayerEvent>(Channel.UNLIMITED)
+    private val emitted = MutableSharedFlow<VideoPlayerEvent>(
+        replay = 1,
+        extraBufferCapacity = 16,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
 
-    override val events: Flow<VideoPlayerEvent> = emitted.receiveAsFlow()
+    override val events: Flow<VideoPlayerEvent> = emitted.asSharedFlow()
 
     val started = mutableListOf<PlaybackSource>()
     var stops = 0
         private set
 
     override fun start(source: PlaybackSource) {
+        emitted.resetReplayCache()
         started += source
+        reportedOnStart.forEach { report(it) }
     }
 
     override fun stop() {
@@ -56,6 +65,6 @@ internal class FakeVideoPlayer : VideoPlayer {
     }
 
     fun report(event: VideoPlayerEvent) {
-        emitted.trySend(event)
+        emitted.tryEmit(event)
     }
 }
