@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mibosmart.shared.generated.resources.Res
-import mibosmart.shared.generated.resources.compose_multiplatform
+import mibosmart.shared.generated.resources.mibo_logo
 import org.jetbrains.compose.resources.painterResource
 import intelbras.mobi.smart.ui.theme.MiboTheme
 
@@ -26,7 +26,7 @@ fun MiboWordmark(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Icon(
-            painter = painterResource(Res.drawable.compose_multiplatform),
+            painter = painterResource(Res.drawable.mibo_logo),
             contentDescription = "Mibo Logo",
             modifier = Modifier.size(34.dp),
             tint = MiboTheme.colors.primary,
