@@ -76,6 +76,7 @@ class LiveVideoViewModelTest {
         testScheduler.runCurrent()
 
         assertEquals(LiveVideoUiState.Playing, viewModel.uiState.value)
+        viewModel.onScreenClosed()
     }
 
     @Test
@@ -162,6 +163,7 @@ class LiveVideoViewModelTest {
         val details = viewModel.details.value
         assertEquals("session-1", details.sessionId)
         assertEquals(1.0, details.quotaGb)
+        viewModel.onScreenClosed()
     }
 
     @Test
@@ -182,6 +184,7 @@ class LiveVideoViewModelTest {
         val details = viewModel.details.value
         assertEquals(LiveVideoUsage(5_242_880L, 0.8, isSessionActive = true), details.usage)
         verifySuspend { streamingMonitor.usageOf("session-1") }
+        viewModel.onScreenClosed()
     }
 
     @Test
@@ -193,6 +196,7 @@ class LiveVideoViewModelTest {
 
         assertEquals(null, viewModel.details.value.usage)
         assertEquals(false, viewModel.details.value.isReadingUsage)
+        viewModel.onScreenClosed()
     }
 
     @Test
@@ -213,6 +217,7 @@ class LiveVideoViewModelTest {
         testScheduler.runCurrent()
 
         verifySuspend(VerifyMode.atLeast(4)) { streamingMonitor.usageOf("session-1") }
+        viewModel.onScreenClosed()
     }
 
     @Test
