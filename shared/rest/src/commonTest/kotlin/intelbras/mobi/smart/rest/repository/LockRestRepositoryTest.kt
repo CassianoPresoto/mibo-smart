@@ -110,7 +110,7 @@ class LockRestRepositoryTest {
         val repository = LockRestRepository(
             testApiCaller(captured) {
                 respondEnvelope(
-                    """[{"data":"20260824T101500Z","tipo":"senha","usuario":"Cassiano","idUsuario":7}]"""
+                    """[{"tempoLocal":"20260825T172107","nome":"APP","tipo":"usuarioRemoto"}]"""
                 )
             }
         )
@@ -123,9 +123,9 @@ class LockRestRepositoryTest {
         assertEquals("/fechaduras/historico-abertura/v1", recorded.url.encodedPath)
         assertEquals("""{"ns":"$SUBDEVICE_SERIAL_NUMBER","quantidade":10}""", recorded.bodyText())
         val record = records.single()
-        assertEquals("senha", record.type)
-        assertEquals("Cassiano", record.user)
-        assertEquals(7, record.userId)
+        assertEquals("20260825T172107", record.localTime)
+        assertEquals("APP", record.user)
+        assertEquals("usuarioRemoto", record.way)
     }
 
     @Test

@@ -3,6 +3,7 @@ package intelbras.mobi.smart.ui.feature.lock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import intelbras.mobi.smart.business.LockController
+import intelbras.mobi.smart.business.usecase.LockHistoryResult
 import intelbras.mobi.smart.business.usecase.LockOperationResult
 import intelbras.mobi.smart.business.usecase.LockStatusResult
 import intelbras.mobi.smart.business.usecase.LockVolumeChangeResult
@@ -26,16 +27,19 @@ class LockViewModel(
     private var lock: DeviceReference? = null
     private var work: Job? = null
     private var volumeWork: Job? = null
+    private var historyWork: Job? = null
 
     fun onScreenOpened(lock: DeviceReference) {
         this.lock = lock
         readStatus()
         readVolume()
+        readHistory()
     }
 
     fun onScreenResumed() {
         readStatus(quietly = true)
         readVolume(quietly = true)
+        readHistory(quietly = true)
     }
 
     fun onRetry() = readStatus()
@@ -45,6 +49,8 @@ class LockViewModel(
     fun onClose() = switch(open = false)
 
     fun onVolumeRetry() = readVolume()
+
+    fun onHistoryRetry() = readHistory()
 
     fun onVolumeSelected(level: LockVolumeLevel) {
         val lock = lock ?: return
@@ -88,6 +94,21 @@ class LockViewModel(
         volumeWork = viewModelScope.launch {
             val result = lockController.volumeOf(lock)
             mutableUiState.update { state -> state.withVolume { volume -> volume.after(result) } }
+        }
+    }
+
+    private fun readHistory(quietly: Boolean = false) {
+        val lock = lock ?: return
+        if (historyWork?.isActive == true) return
+
+        if (!quietly) {
+            mutableUiState.update { state ->
+                state.copy(history = state.history.copy(isLoading = true, failure = null))
+            }
+        }
+        historyWork = viewModelScope.launch {
+            val result = lockController.historyOf(lock, HISTORY_SIZE)
+            mutableUiState.update { state -> state.copy(history = state.history.after(result)) }
         }
     }
 
@@ -158,6 +179,31 @@ class LockViewModel(
             else -> copy(isChanging = false, failure = result.toFailure())
         }
 
+    private fun LockHistoryUiState.after(result: LockHistoryResult): LockHistoryUiState =
+        when (result) {
+            is LockHistoryResult.Loaded -> LockHistoryUiState(
+                openings = result.openings.toUiModels(),
+                isLoading = false,
+            )
+
+            LockHistoryResult.Unavailable -> LockHistoryUiState(
+                isLoading = false,
+                isUnavailable = true,
+            )
+
+            else -> copy(isLoading = false, failure = result.toFailure())
+        }
+
+    private fun LockHistoryResult.toFailure(): LockFailure = when (this) {
+        LockHistoryResult.DeviceOffline -> LockFailure.DeviceOffline
+        LockHistoryResult.InvalidToken -> LockFailure.SessionExpired
+        LockHistoryResult.NetworkUnavailable -> LockFailure.NetworkUnavailable
+        LockHistoryResult.Unavailable,
+        is LockHistoryResult.Error,
+        is LockHistoryResult.Loaded,
+        -> LockFailure.Unexpected
+    }
+
     private fun LockOperationResult.toFailure(): LockFailure = when (this) {
         LockOperationResult.Refused -> LockFailure.Refused
         LockOperationResult.DeviceOffline -> LockFailure.DeviceOffline
@@ -192,4 +238,8 @@ class LockViewModel(
     }
 
     private fun openOrClosed(isOpen: Boolean) = if (isOpen) LockStatus.Open else LockStatus.Closed
+
+    private companion object {
+        const val HISTORY_SIZE = 20
+    }
 }
