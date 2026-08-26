@@ -25,6 +25,7 @@ import intelbras.mobi.smart.business.usecase.DeviceListing
 import intelbras.mobi.smart.business.usecase.LiveVideoPlayback
 import intelbras.mobi.smart.business.usecase.LockConfirmation
 import intelbras.mobi.smart.business.usecase.LockConfirmationPolicy
+import intelbras.mobi.smart.business.usecase.LockDetailsReading
 import intelbras.mobi.smart.business.usecase.LockHistoryReading
 import intelbras.mobi.smart.business.usecase.LockInspection
 import intelbras.mobi.smart.business.usecase.LockSwitching
@@ -66,6 +67,7 @@ fun businessModule(
     factory { DeviceListing(get(), get()) }
     factory { LiveVideoPlayback(get(), get()) }
     factory { LockConfirmation(get()) }
+    factory { LockDetailsReading(get(), get(), get()) }
     factory { LockHistoryReading(get()) }
     factory { LockInspection(get()) }
     factory { LockSwitching(get(), get()) }
@@ -79,7 +81,7 @@ fun businessModule(
 
     single<DeviceCatalog> { DeviceCatalogImpl(get()) }
     single<DeviceConnector> { DeviceConnectorImpl(get(), get()) }
-    single<LockController> { LockControllerImpl(get(), get(), get(), get(), get()) }
+    single<LockController> { LockControllerImpl(get(), get(), get(), get(), get(), get()) }
     single<SmartHomeSession> { SmartHomeSessionImpl(get(), get(), get()) }
     single<StreamingMonitor> { StreamingMonitorImpl(get()) }
     single<ThemeSettings> { ThemeSettingsImpl(get()) }

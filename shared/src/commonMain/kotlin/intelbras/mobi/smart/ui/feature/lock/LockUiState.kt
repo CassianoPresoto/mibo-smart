@@ -9,9 +9,16 @@ data class LockUiState(
     val failure: LockFailure? = null,
     val volume: LockVolumeUiState = LockVolumeUiState(),
     val history: LockHistoryUiState = LockHistoryUiState(),
+    val details: LockDetailsUiState = LockDetailsUiState(),
 ) {
     val canSwitch: Boolean get() = !isSwitching && status != LockStatus.Checking
 }
+
+data class LockDetailsUiState(
+    val batteryPercentage: Int? = null,
+    val signalStrength: Int? = null,
+    val remoteOpeningEnabled: Boolean? = null,
+)
 
 data class LockVolumeUiState(
     val level: LockVolumeLevel? = null,
@@ -34,11 +41,20 @@ data class LockHistoryUiState(
 ) {
     val isEmpty: Boolean
         get() = openings.isEmpty() && !isLoading && !isUnavailable && failure == null
+
+    val latest: List<LockOpeningUiModel> get() = openings.take(CARD_OPENINGS)
+
+    val hasOpenings: Boolean get() = openings.isNotEmpty()
+
+    private companion object {
+        const val CARD_OPENINGS = 5
+    }
 }
 
 data class LockOpeningUiModel(
     val id: String,
     val happenedAt: String,
+    val time: String,
     val user: String,
     val way: LockOpeningWayUiModel,
 )

@@ -1,40 +1,28 @@
-package intelbras.mobi.smart.ui.feature.lock
+package intelbras.mobi.smart.ui.feature.lock.history
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import intelbras.mobi.smart.domain.device.model.DeviceReference
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-internal fun LockRoute(
+internal fun OpeningHistoryRoute(
     lock: DeviceReference,
     lockName: String,
-    lockModel: String,
-    onSeeAllHistory: () -> Unit,
     onLeave: () -> Unit,
-    viewModel: LockViewModel = koinViewModel(),
+    viewModel: OpeningHistoryViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(lock) { viewModel.onScreenOpened(lock) }
-    LifecycleResumeEffect(lock) {
-        viewModel.onScreenResumed()
-        onPauseOrDispose { }
-    }
 
-    LockScreen(
+    OpeningHistoryScreen(
         uiState = uiState,
         lockName = lockName,
-        lockModel = lockModel,
-        onToggle = viewModel::onToggle,
+        onLoadMore = viewModel::onLoadMore,
         onRetry = viewModel::onRetry,
-        onVolumeSelected = viewModel::onVolumeSelected,
-        onVolumeRetry = viewModel::onVolumeRetry,
-        onHistoryRetry = viewModel::onHistoryRetry,
-        onSeeAllHistory = onSeeAllHistory,
         onLeave = onLeave,
     )
 }

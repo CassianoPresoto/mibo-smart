@@ -52,13 +52,13 @@ class SensorRestRepositoryTest {
     fun `readZigbeeSignal posts the sensor reference and returns the signal strength`() = runTest {
         val captured = mutableListOf<HttpRequestData>()
         val repository = SensorRestRepository(
-            testApiCaller(captured) { respondEnvelope("""{"sinal":-70}""") }
+            testApiCaller(captured) { respondEnvelope("""{"sinalZigbee":4}""") }
         )
 
         val signal = repository.readZigbeeSignal(reference)
 
         assertRequest(captured, "/sensores/sinal-zigbee/v1")
-        assertEquals(-70, signal.strength)
+        assertEquals(4, signal.strength)
     }
 
     @Test

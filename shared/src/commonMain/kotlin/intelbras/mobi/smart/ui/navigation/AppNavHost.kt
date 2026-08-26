@@ -21,6 +21,7 @@ import intelbras.mobi.smart.ui.feature.account.AccountRoute as AccountDestinatio
 import intelbras.mobi.smart.ui.feature.devices.DeviceListRoute as DeviceListDestination
 import intelbras.mobi.smart.ui.feature.session.SessionCheckRoute as SessionCheckDestination
 import intelbras.mobi.smart.ui.feature.lock.LockRoute as LockDestination
+import intelbras.mobi.smart.ui.feature.lock.history.OpeningHistoryRoute as LockHistoryDestination
 import intelbras.mobi.smart.ui.feature.token.TokenEntryRoute as TokenEntryDestination
 import intelbras.mobi.smart.ui.feature.video.LiveVideoRoute as LiveVideoDestination
 
@@ -94,6 +95,20 @@ internal fun AppNavHost(navController: NavHostController = rememberNavController
                 lock = route.reference(),
                 lockName = route.name,
                 lockModel = route.model,
+                onSeeAllHistory = {
+                    navController.navigate(
+                        LockHistoryRoute(route.address, route.productId, route.name)
+                    )
+                },
+                onLeave = { navController.popBackStack() },
+            )
+        }
+
+        composable<LockHistoryRoute> { entry ->
+            val route = entry.toRoute<LockHistoryRoute>()
+            LockHistoryDestination(
+                lock = route.reference(),
+                lockName = route.name,
                 onLeave = { navController.popBackStack() },
             )
         }
@@ -116,3 +131,6 @@ private fun LiveVideoRoute.reference() =
     DeviceReference(serialNumber = address, productId = productId)
 
 private fun LockRoute.reference() = DeviceReference(serialNumber = address, productId = productId)
+
+private fun LockHistoryRoute.reference() =
+    DeviceReference(serialNumber = address, productId = productId)
