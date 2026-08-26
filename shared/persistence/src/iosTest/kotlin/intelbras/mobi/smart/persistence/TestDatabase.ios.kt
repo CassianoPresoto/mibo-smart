@@ -17,3 +17,14 @@ internal actual fun inMemoryDriver(): SqlDriver {
         )
     )
 }
+
+private var emptyDatabaseCount = 0
+
+internal actual fun emptyDriver(): SqlDriver = NativeSqliteDriver(
+    DatabaseConfiguration(
+        name = "smart_home_empty_${emptyDatabaseCount++}.db",
+        version = 1,
+        inMemory = true,
+        create = { },
+    )
+)

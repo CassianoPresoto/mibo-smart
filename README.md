@@ -71,6 +71,15 @@ Casos de uso e guarda do token de acesso em memória, em `business/usecase`: o c
 página mínima e descarta o token se a plataforma recusar), listar dispositivos (com filtro de
 origem e paginação saneada), conectar a um dispositivo e encerrar sessão.
 
+A conta tem o seu próprio resumo: `AccountInspection` junta o token guardado (só o sufixo sai
+daqui — o valor inteiro nunca chega na tela) e quanto falta para ele expirar. Tudo já está neste
+dispositivo, então a tela de conta não fala com a plataforma e não tem estado de carregamento.
+
+As preferências do usuário ficam neste dispositivo, num armazenamento chave/valor
+(`UserPreferenceStore`, tabela `userPreferenceEntity`). Hoje a única chave é o tema
+(`ThemeSettings` publica `ThemeMode.System/Light/Dark`, e `System` é o padrão enquanto o usuário
+não escolher); preferência nova entra como uma chave nova em `UserPreference`, sem tabela nova.
+
 Cada dispositivo listado vem com o seu tipo: `DeviceKindResolution` pergunta as funções do aparelho e
 traduz para `DeviceKind` — hoje `Camera` (marcador `RTSV*`) ou `Unknown`. A listagem resolve os tipos em
 paralelo e não deixa uma consulta de funções que falhou derrubar a lista; o aparelho só aparece sem tipo.

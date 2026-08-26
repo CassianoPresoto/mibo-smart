@@ -39,7 +39,6 @@ data class DeviceListUiState(
     val isLoadingMore: Boolean = false,
     val hasMore: Boolean = false,
     val failure: DeviceListFailure? = null,
-    val accountInitials: String = "",
 ) {
     val isEmpty: Boolean get() = !isLoading && failure == null && devices.isEmpty()
 

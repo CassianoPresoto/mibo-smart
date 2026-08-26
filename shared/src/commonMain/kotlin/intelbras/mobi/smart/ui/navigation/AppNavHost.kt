@@ -17,21 +17,17 @@ import androidx.navigation.toRoute
 import intelbras.mobi.smart.domain.device.model.DeviceReference
 import intelbras.mobi.smart.ui.feature.devices.DeviceKind
 import intelbras.mobi.smart.ui.feature.devices.DeviceUiModel
+import intelbras.mobi.smart.ui.feature.account.AccountRoute as AccountDestination
 import intelbras.mobi.smart.ui.feature.devices.DeviceListRoute as DeviceListDestination
 import intelbras.mobi.smart.ui.feature.session.SessionCheckRoute as SessionCheckDestination
 import intelbras.mobi.smart.ui.feature.lock.LockRoute as LockDestination
-import intelbras.mobi.smart.ui.feature.session.SessionViewModel
 import intelbras.mobi.smart.ui.feature.token.TokenEntryRoute as TokenEntryDestination
 import intelbras.mobi.smart.ui.feature.video.LiveVideoRoute as LiveVideoDestination
-import org.koin.compose.viewmodel.koinViewModel
 
 private const val SLIDE_BACK_FRACTION = 3
 
 @Composable
-internal fun AppNavHost(
-    navController: NavHostController = rememberNavController(),
-    sessionViewModel: SessionViewModel = koinViewModel(),
-) {
+internal fun AppNavHost(navController: NavHostController = rememberNavController()) {
     NavHost(
         navController = navController,
         startDestination = SessionCheckRoute,
@@ -67,12 +63,18 @@ internal fun AppNavHost(
                 onDeviceClick = { device ->
                     device.destination()?.let { destination -> navController.navigate(destination) }
                 },
-                onAccountClick = {
-                    sessionViewModel.onSignOut()
+                onAccountClick = { navController.navigate(AccountRoute) },
+            )
+        }
+
+        composable<AccountRoute> {
+            AccountDestination(
+                onSignedOut = {
                     navController.navigate(TokenEntryRoute()) {
                         popUpTo(DeviceListRoute) { inclusive = true }
                     }
                 },
+                onLeave = { navController.popBackStack() },
             )
         }
 

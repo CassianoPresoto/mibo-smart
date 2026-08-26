@@ -1,7 +1,6 @@
 package intelbras.mobi.smart.ui.feature.video
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,11 +20,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import intelbras.mobi.smart.ui.theme.MiboSmartShapes
+import intelbras.mobi.smart.ui.component.MiboCard
+import intelbras.mobi.smart.ui.component.MiboDetailRow
 import intelbras.mobi.smart.ui.theme.MiboSmartSize
 import intelbras.mobi.smart.ui.theme.MiboTheme
 import mibosmart.shared.generated.resources.Res
@@ -61,25 +59,18 @@ internal fun CameraStatusCard(
 ) {
     val colors = MiboTheme.colors
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(MiboSmartShapes.card)
-            .background(colors.surface)
-            .border(MiboSmartSize.hairline, colors.outline, MiboSmartShapes.card)
-            .padding(16.dp),
-    ) {
+    MiboCard(modifier = modifier) {
         StatusHeader(uiState)
 
         if (details.hasSession) {
             Spacer(Modifier.height(14.dp))
             UsageOverview(details)
             details.usage?.let { usage ->
-                DetailRow(
+                MiboDetailRow(
                     label = stringResource(Res.string.live_video_details_session_active),
                     value = stringResource(usage.activeLabelResource()),
                 )
-                DetailRow(
+                MiboDetailRow(
                     label = stringResource(Res.string.live_video_details_remaining),
                     value = stringResource(Res.string.live_video_gigabytes, withOneDecimal(usage.remainingQuotaGb)),
                     monospace = true,
@@ -97,8 +88,8 @@ internal fun CameraStatusCard(
             )
         }
 
-        DetailRow(stringResource(Res.string.live_video_details_model), deviceModel)
-        DetailRow(
+        MiboDetailRow(stringResource(Res.string.live_video_details_model), deviceModel)
+        MiboDetailRow(
             label = stringResource(Res.string.live_video_details_serial),
             value = deviceSerialNumber,
             monospace = true,
@@ -186,35 +177,6 @@ private fun UsageProgressBar(fraction: Float) {
                 .height(6.dp)
                 .clip(RoundedCornerShape(4.dp))
                 .background(colors.primary),
-        )
-    }
-}
-
-@Composable
-private fun DetailRow(label: String, value: String, monospace: Boolean = false) {
-    val colors = MiboTheme.colors
-    HorizontalDivider(color = colors.outline, thickness = MiboSmartSize.hairline)
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            text = label,
-            style = MiboTheme.typography.body,
-            color = colors.muted,
-        )
-        Text(
-            text = value,
-            style = if (monospace) {
-                MiboTheme.typography.mono.copy(
-                    fontSize = 14.sp,
-                    letterSpacing = 0.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            } else {
-                MiboTheme.typography.body.copy(fontWeight = FontWeight.SemiBold)
-            },
-            color = colors.text,
         )
     }
 }

@@ -1,0 +1,16 @@
+CREATE TABLE userPreferenceEntity (
+    preferenceKey TEXT NOT NULL PRIMARY KEY,
+    preferenceValue TEXT NOT NULL
+);
+
+selectValue:
+SELECT preferenceValue
+FROM userPreferenceEntity
+WHERE preferenceKey = :preferenceKey;
+
+replaceValue:
+INSERT OR REPLACE INTO userPreferenceEntity(preferenceKey, preferenceValue)
+VALUES (:preferenceKey, :preferenceValue);
+
+deleteValue:
+DELETE FROM userPreferenceEntity WHERE preferenceKey = :preferenceKey;

@@ -2,11 +2,13 @@ package intelbras.mobi.smart.di
 
 import intelbras.mobi.smart.business.di.businessModule
 import intelbras.mobi.smart.persistence.SmartHomePersistenceFactory
+import intelbras.mobi.smart.ui.feature.account.AccountViewModel
 import intelbras.mobi.smart.ui.feature.devices.DeviceListViewModel
 import intelbras.mobi.smart.ui.feature.lock.LockViewModel
 import intelbras.mobi.smart.ui.feature.session.SessionViewModel
 import intelbras.mobi.smart.ui.feature.token.TokenEntryViewModel
 import intelbras.mobi.smart.ui.feature.video.LiveVideoViewModel
+import intelbras.mobi.smart.ui.theme.AppThemeViewModel
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModelOf
@@ -22,6 +24,8 @@ fun startSmartHomeDependencies(
 }
 
 private fun presentationModule(): Module = module {
+    viewModelOf(::AccountViewModel)
+    viewModelOf(::AppThemeViewModel)
     viewModelOf(::LockViewModel)
     viewModelOf(::SessionViewModel)
     viewModelOf(::TokenEntryViewModel)
