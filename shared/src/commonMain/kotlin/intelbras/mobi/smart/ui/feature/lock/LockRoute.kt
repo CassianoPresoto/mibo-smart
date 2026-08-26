@@ -31,6 +31,8 @@ internal fun LockRoute(
         onOpen = viewModel::onOpen,
         onClose = viewModel::onClose,
         onRetry = viewModel::onRetry,
+        onVolumeSelected = viewModel::onVolumeSelected,
+        onVolumeRetry = viewModel::onVolumeRetry,
         onLeave = onLeave,
     )
 }

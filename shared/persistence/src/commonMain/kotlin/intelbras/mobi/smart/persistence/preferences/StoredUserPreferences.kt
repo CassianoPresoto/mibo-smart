@@ -13,16 +13,21 @@ internal class StoredUserPreferences(
 
     private val queries = database.userPreferenceQueries
 
-    override suspend fun read(preference: UserPreference): String? = withContext(ioDispatcher) {
-        queries.selectValue(preference.key).executeAsOneOrNull()
-    }
-
-    override suspend fun save(preference: UserPreference, value: String): Unit =
+    override suspend fun read(preference: UserPreference, scope: String?): String? =
         withContext(ioDispatcher) {
-            queries.replaceValue(preferenceKey = preference.key, preferenceValue = value)
+            queries.selectValue(preference.keyFor(scope)).executeAsOneOrNull()
         }
 
-    override suspend fun clear(preference: UserPreference): Unit = withContext(ioDispatcher) {
-        queries.deleteValue(preference.key)
-    }
+    override suspend fun save(preference: UserPreference, value: String, scope: String?): Unit =
+        withContext(ioDispatcher) {
+            queries.replaceValue(
+                preferenceKey = preference.keyFor(scope),
+                preferenceValue = value,
+            )
+        }
+
+    override suspend fun clear(preference: UserPreference, scope: String?): Unit =
+        withContext(ioDispatcher) {
+            queries.deleteValue(preference.keyFor(scope))
+        }
 }

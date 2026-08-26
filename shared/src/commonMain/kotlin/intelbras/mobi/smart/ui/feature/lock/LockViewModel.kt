@@ -5,7 +5,10 @@ import androidx.lifecycle.viewModelScope
 import intelbras.mobi.smart.business.LockController
 import intelbras.mobi.smart.business.usecase.LockOperationResult
 import intelbras.mobi.smart.business.usecase.LockStatusResult
+import intelbras.mobi.smart.business.usecase.LockVolumeChangeResult
+import intelbras.mobi.smart.business.usecase.LockVolumeResult
 import intelbras.mobi.smart.domain.device.model.DeviceReference
+import intelbras.mobi.smart.domain.lock.model.LockVolumeLevel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,19 +25,41 @@ class LockViewModel(
 
     private var lock: DeviceReference? = null
     private var work: Job? = null
+    private var volumeWork: Job? = null
 
     fun onScreenOpened(lock: DeviceReference) {
         this.lock = lock
         readStatus()
+        readVolume()
     }
 
-    fun onScreenResumed() = readStatus(quietly = true)
+    fun onScreenResumed() {
+        readStatus(quietly = true)
+        readVolume(quietly = true)
+    }
 
     fun onRetry() = readStatus()
 
     fun onOpen() = switch(open = true)
 
     fun onClose() = switch(open = false)
+
+    fun onVolumeRetry() = readVolume()
+
+    fun onVolumeSelected(level: LockVolumeLevel) {
+        val lock = lock ?: return
+        if (volumeWork?.isActive == true) return
+
+        mutableUiState.update { state ->
+            state.withVolume { volume ->
+                volume.copy(isChanging = true, awaitingConfirmation = false, failure = null)
+            }
+        }
+        volumeWork = viewModelScope.launch {
+            val result = lockController.changeVolume(lock, level)
+            mutableUiState.update { state -> state.withVolume { volume -> volume.after(result) } }
+        }
+    }
 
     private fun readStatus(quietly: Boolean = false) {
         val lock = lock ?: return
@@ -46,7 +71,23 @@ class LockViewModel(
             }
         }
         work = viewModelScope.launch {
-            mutableUiState.value = lockController.statusOf(lock).toUiState()
+            val result = lockController.statusOf(lock)
+            mutableUiState.update { state -> state.after(result) }
+        }
+    }
+
+    private fun readVolume(quietly: Boolean = false) {
+        val lock = lock ?: return
+        if (volumeWork?.isActive == true) return
+
+        if (!quietly) {
+            mutableUiState.update { state ->
+                state.withVolume { volume -> volume.copy(isReading = true, failure = null) }
+            }
+        }
+        volumeWork = viewModelScope.launch {
+            val result = lockController.volumeOf(lock)
+            mutableUiState.update { state -> state.withVolume { volume -> volume.after(result) } }
         }
     }
 
@@ -63,6 +104,9 @@ class LockViewModel(
         }
     }
 
+    private fun LockUiState.withVolume(change: (LockVolumeUiState) -> LockVolumeUiState) =
+        copy(volume = change(volume))
+
     private fun LockUiState.after(result: LockOperationResult): LockUiState = when (result) {
         is LockOperationResult.Done -> copy(
             status = openOrClosed(result.isOpen),
@@ -74,6 +118,46 @@ class LockViewModel(
         else -> copy(isSwitching = false, failure = result.toFailure())
     }
 
+    private fun LockUiState.after(result: LockStatusResult): LockUiState = when (result) {
+        is LockStatusResult.Known -> copy(
+            status = openOrClosed(result.isOpen),
+            isSwitching = false,
+            awaitingConfirmation = false,
+            failure = null,
+        )
+
+        else -> copy(status = LockStatus.Unknown, failure = result.toFailure())
+    }
+
+    private fun LockVolumeUiState.after(result: LockVolumeResult): LockVolumeUiState =
+        when (result) {
+            is LockVolumeResult.Known -> LockVolumeUiState(
+                level = result.level,
+                source = LockVolumeSource.Platform,
+                isReading = false,
+            )
+
+            is LockVolumeResult.Remembered -> LockVolumeUiState(
+                level = result.level,
+                source = LockVolumeSource.Remembered,
+                isReading = false,
+            )
+
+            else -> copy(isReading = false, failure = result.toFailure())
+        }
+
+    private fun LockVolumeUiState.after(result: LockVolumeChangeResult): LockVolumeUiState =
+        when (result) {
+            is LockVolumeChangeResult.Done -> LockVolumeUiState(
+                level = result.level,
+                source = if (result.confirmed) LockVolumeSource.Platform else source,
+                isReading = false,
+                awaitingConfirmation = !result.confirmed && !isRemembered,
+            )
+
+            else -> copy(isChanging = false, failure = result.toFailure())
+        }
+
     private fun LockOperationResult.toFailure(): LockFailure = when (this) {
         LockOperationResult.Refused -> LockFailure.Refused
         LockOperationResult.DeviceOffline -> LockFailure.DeviceOffline
@@ -82,17 +166,30 @@ class LockViewModel(
         is LockOperationResult.Error, is LockOperationResult.Done -> LockFailure.Unexpected
     }
 
-    private fun LockStatusResult.toUiState(): LockUiState = when (this) {
-        is LockStatusResult.Known -> LockUiState(status = openOrClosed(isOpen))
-        LockStatusResult.DeviceOffline -> failedWith(LockFailure.DeviceOffline)
-        LockStatusResult.InvalidToken -> failedWith(LockFailure.SessionExpired)
-        LockStatusResult.NetworkUnavailable -> failedWith(LockFailure.NetworkUnavailable)
-        is LockStatusResult.Error -> failedWith(LockFailure.Unexpected)
+    private fun LockStatusResult.toFailure(): LockFailure = when (this) {
+        LockStatusResult.DeviceOffline -> LockFailure.DeviceOffline
+        LockStatusResult.InvalidToken -> LockFailure.SessionExpired
+        LockStatusResult.NetworkUnavailable -> LockFailure.NetworkUnavailable
+        is LockStatusResult.Error, is LockStatusResult.Known -> LockFailure.Unexpected
+    }
+
+    private fun LockVolumeResult.toFailure(): LockFailure = when (this) {
+        LockVolumeResult.DeviceOffline -> LockFailure.DeviceOffline
+        LockVolumeResult.InvalidToken -> LockFailure.SessionExpired
+        LockVolumeResult.NetworkUnavailable -> LockFailure.NetworkUnavailable
+        is LockVolumeResult.Error,
+        is LockVolumeResult.Known,
+        is LockVolumeResult.Remembered,
+        -> LockFailure.Unexpected
+    }
+
+    private fun LockVolumeChangeResult.toFailure(): LockFailure = when (this) {
+        LockVolumeChangeResult.Refused -> LockFailure.Refused
+        LockVolumeChangeResult.DeviceOffline -> LockFailure.DeviceOffline
+        LockVolumeChangeResult.InvalidToken -> LockFailure.SessionExpired
+        LockVolumeChangeResult.NetworkUnavailable -> LockFailure.NetworkUnavailable
+        is LockVolumeChangeResult.Error, is LockVolumeChangeResult.Done -> LockFailure.Unexpected
     }
 
     private fun openOrClosed(isOpen: Boolean) = if (isOpen) LockStatus.Open else LockStatus.Closed
-
-    private fun failedWith(failure: LockFailure) =
-        LockUiState(status = LockStatus.Unknown, failure = failure)
-
 }
