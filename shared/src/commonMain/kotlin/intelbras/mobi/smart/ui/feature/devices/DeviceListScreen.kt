@@ -28,7 +28,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import intelbras.mobi.smart.ui.component.MiboAccountAvatar
+import intelbras.mobi.smart.ui.component.MiboAccountButton
 import intelbras.mobi.smart.ui.component.MiboErrorMark
 import intelbras.mobi.smart.ui.component.MiboFeedbackState
 import intelbras.mobi.smart.ui.component.MiboFilterChip
@@ -66,10 +66,7 @@ internal fun DeviceListScreen(
             .background(MiboTheme.colors.background)
             .statusBarsPadding(),
     ) {
-        DeviceListHeader(
-            accountInitials = uiState.accountInitials,
-            onAccountClick = onAccountClick,
-        )
+        DeviceListHeader(onAccountClick = onAccountClick)
 
         DeviceFilterRow(
             selected = uiState.filter,
@@ -111,10 +108,7 @@ internal fun DeviceListScreen(
 }
 
 @Composable
-private fun DeviceListHeader(
-    accountInitials: String,
-    onAccountClick: () -> Unit,
-) {
+private fun DeviceListHeader(onAccountClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -141,13 +135,10 @@ private fun DeviceListHeader(
                 color = MiboTheme.colors.text,
             )
         }
-        if (accountInitials.isNotBlank()) {
-            MiboAccountAvatar(
-                initials = accountInitials,
-                description = stringResource(Res.string.devices_account),
-                onClick = onAccountClick,
-            )
-        }
+        MiboAccountButton(
+            description = stringResource(Res.string.devices_account),
+            onClick = onAccountClick,
+        )
     }
 }
 
@@ -284,7 +275,7 @@ private fun DeviceListScreenLoadingPreview() {
 private fun DeviceListScreenLoadedPreview() {
     MiboTheme {
         DeviceListScreen(
-            uiState = DeviceListUiState(devices = previewDevices, accountInitials = "MS"),
+            uiState = DeviceListUiState(devices = previewDevices),
             onFilterSelected = {},
             onDeviceClick = {},
             onRetry = {},

@@ -11,8 +11,6 @@
     <string name="token_entry_checking_session">Verificando a sessão salva…</string>
     <string name="token_entry_session_hint">Sessão válida por 2 horas</string>
 
-    <string name="session_sign_out">Sair</string>
-
     <string name="token_failure_empty">Cole o token de acesso para continuar.</string>
     <string name="token_failure_invalid">Token inválido ou expirado. Gere um novo no portal e cole aqui.</string>
     <string name="token_failure_expired_session">Sua sessão expirou depois de 2 horas. Cole um token novo para continuar.</string>
@@ -117,4 +115,14 @@
     <string name="devices_error_expired_action">Inserir novo token</string>
     <string name="devices_error_generic_title">Algo deu errado</string>
     <string name="devices_error_generic_body">A plataforma respondeu de um jeito inesperado. Tente de novo em instantes.</string>
+
+    <string name="account_title">Conta</string>
+    <string name="account_back">Voltar</string>
+    <string name="account_session_title">Sessão</string>
+    <string name="account_session_token">Token</string>
+    <string name="account_session_expires_in">Expira em</string>
+    <string name="account_value_unavailable">—</string>
+    <string name="account_theme_title">Tema escuro</string>
+    <string name="account_theme_subtitle">Segue o sistema por padrão</string>
+    <string name="account_sign_out">Sair</string>
 </resources>

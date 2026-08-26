@@ -6,3 +6,5 @@ import intelbras.mobi.smart.persistence.db.SmartHomeDatabase
 
 internal actual fun inMemoryDriver(): SqlDriver =
     JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY).also(SmartHomeDatabase.Schema::create)
+
+internal actual fun emptyDriver(): SqlDriver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)

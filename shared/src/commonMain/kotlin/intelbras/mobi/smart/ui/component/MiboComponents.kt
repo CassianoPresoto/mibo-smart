@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -124,8 +125,7 @@ fun MiboBackButton(
 }
 
 @Composable
-fun MiboAccountAvatar(
-    initials: String,
+fun MiboAccountButton(
     description: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -137,11 +137,11 @@ fun MiboAccountAvatar(
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = initials,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            color = colors.primary,
+        Icon(
+            imageVector = Icons.Outlined.Person,
+            contentDescription = null,
+            tint = colors.primary,
+            modifier = Modifier.size(20.dp),
         )
     }
 }
@@ -219,7 +219,7 @@ private fun MiboComponentsPreview() {
                 MiboCompactButton(text = "Ação", onClick = {})
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     MiboSquareIconButton(symbol = "⚙", description = "Configurações", onClick = {})
-                    MiboAccountAvatar(initials = "MS", description = "Conta", onClick = {})
+                    MiboAccountButton(description = "Conta", onClick = {})
                     MiboBackButton(description = "Voltar", onClick = {})
                 }
                 MiboCodeChip(text = "ABC-123")

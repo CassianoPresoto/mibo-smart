@@ -1,0 +1,4 @@
+CREATE TABLE userPreferenceEntity (
+    preferenceKey TEXT NOT NULL PRIMARY KEY,
+    preferenceValue TEXT NOT NULL
+);

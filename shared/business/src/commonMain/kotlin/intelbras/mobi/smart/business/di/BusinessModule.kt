@@ -10,9 +10,14 @@ import intelbras.mobi.smart.business.SmartHomeSession
 import intelbras.mobi.smart.business.SmartHomeSessionImpl
 import intelbras.mobi.smart.business.StreamingMonitor
 import intelbras.mobi.smart.business.StreamingMonitorImpl
+import intelbras.mobi.smart.business.ThemeSettings
+import intelbras.mobi.smart.business.ThemeSettingsImpl
+import intelbras.mobi.smart.business.UserAccount
+import intelbras.mobi.smart.business.UserAccountImpl
 import intelbras.mobi.smart.business.VideoPlayback
 import intelbras.mobi.smart.business.VideoPlaybackImpl
 import intelbras.mobi.smart.business.session.StoredAccessTokenProvider
+import intelbras.mobi.smart.business.usecase.AccountInspection
 import intelbras.mobi.smart.business.usecase.ConnectionTermination
 import intelbras.mobi.smart.business.usecase.DeviceConnecting
 import intelbras.mobi.smart.business.usecase.DeviceKindResolution
@@ -49,6 +54,7 @@ fun businessModule(
     single { PlaybackRetryPolicy() }
     single<AccessTokenProvider> { StoredAccessTokenProvider(get(), get()) }
 
+    factory { AccountInspection(get(), get()) }
     factory { ConnectionTermination(get()) }
     factory { DeviceConnecting(get(), get()) }
     factory { DeviceKindResolution(get(), get()) }
@@ -66,5 +72,7 @@ fun businessModule(
     single<LockController> { LockControllerImpl(get(), get()) }
     single<SmartHomeSession> { SmartHomeSessionImpl(get(), get(), get()) }
     single<StreamingMonitor> { StreamingMonitorImpl(get()) }
+    single<ThemeSettings> { ThemeSettingsImpl(get()) }
+    single<UserAccount> { UserAccountImpl(get()) }
     single<VideoPlayback> { VideoPlaybackImpl(get()) }
 }
