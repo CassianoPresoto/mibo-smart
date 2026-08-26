@@ -28,6 +28,7 @@
     <string name="live_video_ended">A transmissão terminou.</string>
     <string name="live_video_watch_again">Assistir de novo</string>
     <string name="live_video_retry">Tentar de novo</string>
+    <string name="live_video_live_badge">AO VIVO</string>
 
     <string name="live_video_details_more">Ver mais</string>
     <string name="live_video_details_less">Ver menos</string>

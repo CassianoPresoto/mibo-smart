@@ -1,7 +1,6 @@
 package intelbras.mobi.smart.ui.feature.video
 
 data class LiveVideoDetails(
-    val isExpanded: Boolean = false,
     val isReadingUsage: Boolean = false,
     val sessionId: String = "",
     val quotaGb: Double = 0.0,

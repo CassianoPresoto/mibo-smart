@@ -35,7 +35,6 @@ internal fun LiveVideoRoute(
         deviceModel = deviceModel,
         deviceSerialNumber = device.serialNumber,
         onRetry = viewModel::onRetry,
-        onDetailsToggled = viewModel::onDetailsToggled,
         onLeave = onLeave,
     )
 }
