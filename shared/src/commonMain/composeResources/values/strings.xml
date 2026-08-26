@@ -59,6 +59,31 @@
     <string name="live_video_failure_network">Sem conexão com a plataforma. Verifique a internet e tente de novo.</string>
     <string name="live_video_failure_interrupted">O vídeo foi interrompido e não voltou. Tente de novo.</string>
     <string name="live_video_failure_unexpected">Não foi possível abrir o vídeo agora. Tente novamente em instantes.</string>
+    <string name="live_video_take_photo">Tirar foto</string>
+    <string name="live_video_start_recording">Gravar take</string>
+    <string name="live_video_stop_recording">Parar a gravação</string>
+    <string name="live_video_recording_badge">REC %1$s</string>
+    <string name="live_video_saving_clip">Salvando o take…</string>
+    <string name="live_video_notice_photo_saved">Foto salva neste aparelho.</string>
+    <string name="live_video_notice_clip_saved">Take salvo neste aparelho.</string>
+    <string name="live_video_notice_frame_unavailable">A imagem ainda não está pronta para captura.</string>
+    <string name="live_video_notice_recording_unsupported">Esta transmissão não permite gravar um take.</string>
+    <string name="live_video_notice_nothing_recorded">O take não chegou a gravar nada.</string>
+    <string name="live_video_notice_failed">Não foi possível salvar a captura.</string>
+
+    <string name="capture_library_title">Capturas</string>
+    <string name="capture_library_subtitle">Fotos e takes de %1$s</string>
+    <string name="capture_library_see_all">Ver todas</string>
+    <string name="capture_library_empty">Nenhuma foto ou take salvo nesta câmera ainda.</string>
+    <string name="capture_library_loading">Carregando as capturas…</string>
+    <string name="capture_library_back">Voltar</string>
+    <string name="capture_library_photo">Foto</string>
+    <string name="capture_library_clip">Take</string>
+    <string name="capture_library_delete">Excluir a captura</string>
+    <string name="capture_library_close">Fechar</string>
+    <string name="capture_library_open">Abrir a captura</string>
+    <string name="capture_library_no_preview">Sem miniatura</string>
+
     <string name="lock_back">Voltar</string>
     <string name="lock_status_title">Status da fechadura</string>
     <string name="lock_status_checking">Verificando…</string>

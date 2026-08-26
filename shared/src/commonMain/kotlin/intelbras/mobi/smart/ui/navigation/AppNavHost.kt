@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -42,8 +43,11 @@ import intelbras.mobi.smart.ui.feature.lock.LockRoute as LockDestination
 import intelbras.mobi.smart.ui.feature.lock.history.OpeningHistoryRoute as LockHistoryDestination
 import intelbras.mobi.smart.ui.feature.token.TokenEntryRoute as TokenEntryDestination
 import intelbras.mobi.smart.ui.feature.video.LiveVideoRoute as LiveVideoDestination
+import intelbras.mobi.smart.ui.feature.video.capture.CaptureLibraryRoute as CaptureLibraryDestination
 
 private const val SLIDE_BACK_FRACTION = 3
+
+private val NO_INSETS = WindowInsets(0, 0, 0, 0)
 
 @Composable
 internal fun AppNavHost(navController: NavHostController = rememberNavController()) {
@@ -52,6 +56,7 @@ internal fun AppNavHost(navController: NavHostController = rememberNavController
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = MiboTheme.colors.background,
+        contentWindowInsets = NO_INSETS,
         bottomBar = {
             if (currentEntry.isTopLevel()) {
                 AppNavigationBar(
@@ -119,6 +124,20 @@ internal fun AppNavHost(navController: NavHostController = rememberNavController
                     device = route.reference(),
                     deviceName = route.name,
                     deviceModel = route.model,
+                    onOpenCapture = { captureId ->
+                        navController.navigate(route.captureLibrary(captureId))
+                    },
+                    onSeeAllCaptures = { navController.navigate(route.captureLibrary()) },
+                    onLeave = { navController.popBackStack() },
+                )
+            }
+
+            composable<CaptureLibraryRoute> { entry ->
+                val route = entry.toRoute<CaptureLibraryRoute>()
+                CaptureLibraryDestination(
+                    camera = route.reference(),
+                    cameraName = route.name,
+                    selectedCaptureId = route.captureId,
                     onLeave = { navController.popBackStack() },
                 )
             }
@@ -201,6 +220,12 @@ private fun DeviceUiModel.destination(): Any? = when (kind) {
 }
 
 private fun LiveVideoRoute.reference() =
+    DeviceReference(serialNumber = address, productId = productId)
+
+private fun LiveVideoRoute.captureLibrary(captureId: String? = null) =
+    CaptureLibraryRoute(address, productId, name, captureId)
+
+private fun CaptureLibraryRoute.reference() =
     DeviceReference(serialNumber = address, productId = productId)
 
 private fun LockRoute.reference() = DeviceReference(serialNumber = address, productId = productId)

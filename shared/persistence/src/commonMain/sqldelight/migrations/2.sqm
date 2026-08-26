@@ -1,0 +1,12 @@
+CREATE TABLE cameraCaptureEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    deviceSerialNumber TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    fileName TEXT NOT NULL,
+    previewFileName TEXT NOT NULL,
+    capturedAtEpochMilliseconds INTEGER NOT NULL,
+    durationMilliseconds INTEGER,
+    sizeBytes INTEGER NOT NULL
+);
+
+CREATE INDEX cameraCaptureEntity_device ON cameraCaptureEntity(deviceSerialNumber);
