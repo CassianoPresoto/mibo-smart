@@ -15,7 +15,7 @@ data class OpeningSensorStatus(
 
 @Serializable
 data class ZigbeeSignalStrength(
-    @SerialName("sinal") val strength: Int = 0,
+    @SerialName("sinalZigbee") val strength: Int = 0,
 )
 
 @Serializable

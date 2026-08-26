@@ -29,3 +29,10 @@ data class LockRoute(
     val name: String,
     val model: String,
 )
+
+@Serializable
+data class LockHistoryRoute(
+    val address: String,
+    val productId: String,
+    val name: String,
+)
