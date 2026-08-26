@@ -1,56 +1,27 @@
 package intelbras.mobi.smart.business.usecase
 
-import intelbras.mobi.smart.business.session.rejectsTheAccessToken
 import intelbras.mobi.smart.domain.device.model.DeviceReference
 import intelbras.mobi.smart.domain.lock.LockRepository
 import intelbras.mobi.smart.domain.lock.model.LockControlRequest
-import intelbras.mobi.smart.rest.SmartHomeDeviceOfflineException
-import intelbras.mobi.smart.rest.SmartHomeNetworkException
-import intelbras.mobi.smart.rest.SmartHomeNotFoundException
-import intelbras.mobi.smart.rest.SmartHomeOperationRejectedException
 import kotlin.coroutines.cancellation.CancellationException
-import kotlinx.coroutines.delay
-
-private const val FIRST_ATTEMPT = 1
 
 internal class LockSwitching(
     private val lockRepository: LockRepository,
-    private val confirmationPolicy: LockConfirmationPolicy,
+    private val confirmation: LockConfirmation,
 ) {
 
     suspend operator fun invoke(lock: DeviceReference, open: Boolean): LockOperationResult = try {
         lockRepository.control(lock.toControlRequest(open))
-        lock.confirm(open)
+        confirmation.await(expected = open) { lockRepository.readOpeningStatus(lock).isOpen }
+            .toOperationResult()
     } catch (cancellation: CancellationException) {
         throw cancellation
     } catch (failure: Throwable) {
         failure.toOperationResult()
     }
 
-    private suspend fun DeviceReference.confirm(expected: Boolean): LockOperationResult {
-        var lastReading: Boolean? = null
-
-        for (attempt in FIRST_ATTEMPT..confirmationPolicy.attempts) {
-            delay(confirmationPolicy.waitBefore(attempt))
-
-            val reading = readOpeningOrNull()
-            if (reading == expected) return LockOperationResult.Done(reading, confirmed = true)
-            if (reading != null) lastReading = reading
-        }
-
-        return LockOperationResult.Done(
-            isOpen = lastReading ?: expected,
-            confirmed = false,
-        )
-    }
-
-    private suspend fun DeviceReference.readOpeningOrNull(): Boolean? = try {
-        lockRepository.readOpeningStatus(this).isOpen
-    } catch (cancellation: CancellationException) {
-        throw cancellation
-    } catch (unreadableLock: Throwable) {
-        null
-    }
+    private fun LockConfirmation.Reading<Boolean>.toOperationResult() =
+        LockOperationResult.Done(isOpen = value, confirmed = confirmed)
 
     private fun DeviceReference.toControlRequest(open: Boolean) = LockControlRequest(
         serialNumber = serialNumber,
@@ -58,12 +29,13 @@ internal class LockSwitching(
         open = open,
     )
 
-    private fun Throwable.toOperationResult(): LockOperationResult = when {
-        rejectsTheAccessToken() -> LockOperationResult.InvalidToken
-        this is SmartHomeOperationRejectedException -> LockOperationResult.Refused
-        this is SmartHomeDeviceOfflineException -> LockOperationResult.DeviceOffline
-        this is SmartHomeNotFoundException -> LockOperationResult.DeviceOffline
-        this is SmartHomeNetworkException -> LockOperationResult.NetworkUnavailable
-        else -> LockOperationResult.Error(this)
+    private fun Throwable.toOperationResult(): LockOperationResult = when (asLockFailureKind()) {
+        LockFailureKind.Refused -> LockOperationResult.Refused
+        LockFailureKind.DeviceOffline -> LockOperationResult.DeviceOffline
+        LockFailureKind.InvalidToken -> LockOperationResult.InvalidToken
+        LockFailureKind.NetworkUnavailable -> LockOperationResult.NetworkUnavailable
+        LockFailureKind.PlatformFailure,
+        LockFailureKind.Unexpected,
+        -> LockOperationResult.Error(this)
     }
 }

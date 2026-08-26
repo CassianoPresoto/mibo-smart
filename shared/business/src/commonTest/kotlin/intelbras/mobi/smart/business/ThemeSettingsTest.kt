@@ -64,15 +64,17 @@ private class InMemoryUserPreferences(
     initial: Map<UserPreference, String> = emptyMap(),
 ) : UserPreferenceStore {
 
-    private val values = initial.toMutableMap()
+    private val values = initial.mapKeys { (preference, _) -> preference.keyFor(null) }
+        .toMutableMap()
 
-    override suspend fun read(preference: UserPreference): String? = values[preference]
+    override suspend fun read(preference: UserPreference, scope: String?): String? =
+        values[preference.keyFor(scope)]
 
-    override suspend fun save(preference: UserPreference, value: String) {
-        values[preference] = value
+    override suspend fun save(preference: UserPreference, value: String, scope: String?) {
+        values[preference.keyFor(scope)] = value
     }
 
-    override suspend fun clear(preference: UserPreference) {
-        values.remove(preference)
+    override suspend fun clear(preference: UserPreference, scope: String?) {
+        values.remove(preference.keyFor(scope))
     }
 }

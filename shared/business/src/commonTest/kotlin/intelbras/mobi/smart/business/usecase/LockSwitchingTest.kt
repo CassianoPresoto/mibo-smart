@@ -150,8 +150,10 @@ class LockSwitchingTest {
         return switching(lockRepository)(lock, open = true)
     }
 
-    private fun switching(lockRepository: LockRepository) =
-        LockSwitching(lockRepository, LockConfirmationPolicy(attempts = 2, firstWait = 1.seconds))
+    private fun switching(lockRepository: LockRepository) = LockSwitching(
+        lockRepository,
+        LockConfirmation(LockConfirmationPolicy(attempts = 2, firstWait = 1.seconds)),
+    )
 
     private fun acceptingRepository(reportsOpen: Boolean) = mock<LockRepository> {
         everySuspend { control(any()) } returns Unit

@@ -42,6 +42,22 @@ class StoredUserPreferencesTest {
     }
 
     @Test
+    fun `keeps one value per scope`() = runTest {
+        store.save(UserPreference.LockVolume, "High", scope = "lockA")
+        store.save(UserPreference.LockVolume, "Mute", scope = "lockB")
+
+        assertEquals("High", store.read(UserPreference.LockVolume, scope = "lockA"))
+        assertEquals("Mute", store.read(UserPreference.LockVolume, scope = "lockB"))
+    }
+
+    @Test
+    fun `a scoped value does not answer for the preference without scope`() = runTest {
+        store.save(UserPreference.LockVolume, "High", scope = "lockA")
+
+        assertNull(store.read(UserPreference.LockVolume))
+    }
+
+    @Test
     fun `clearing a preference that was never saved is harmless`() = runTest {
         store.clear(UserPreference.ThemeMode)
 

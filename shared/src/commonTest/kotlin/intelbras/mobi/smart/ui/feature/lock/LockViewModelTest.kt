@@ -10,7 +10,10 @@ import dev.mokkery.verifySuspend
 import intelbras.mobi.smart.business.LockController
 import intelbras.mobi.smart.business.usecase.LockOperationResult
 import intelbras.mobi.smart.business.usecase.LockStatusResult
+import intelbras.mobi.smart.business.usecase.LockVolumeChangeResult
+import intelbras.mobi.smart.business.usecase.LockVolumeResult
 import intelbras.mobi.smart.domain.device.model.DeviceReference
+import intelbras.mobi.smart.domain.lock.model.LockVolumeLevel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -174,6 +177,7 @@ class LockViewModelTest {
                 returns(LockStatusResult.Known(isOpen = false))
                 returns(LockStatusResult.Known(isOpen = true))
             }
+            everySuspend { volumeOf(any()) } returns LockVolumeResult.Known(LockVolumeLevel.Low)
         }
         val viewModel = LockViewModel(controller)
         viewModel.onScreenOpened(lock)
@@ -199,6 +203,216 @@ class LockViewModelTest {
         assertEquals(null, viewModel.uiState.value.failure)
     }
 
+    @Test
+    fun `reads the current volume as soon as the screen opens`() = runTest(testDispatcher) {
+        val controller = controllerAnswering(
+            result = LockStatusResult.Known(isOpen = false),
+            volume = LockVolumeResult.Known(LockVolumeLevel.High),
+        )
+        val viewModel = LockViewModel(controller)
+
+        viewModel.onScreenOpened(lock)
+        assertTrue(viewModel.uiState.value.volume.isReading)
+        testScheduler.advanceUntilIdle()
+
+        val volume = viewModel.uiState.value.volume
+        assertEquals(LockVolumeLevel.High, volume.level)
+        assertFalse(volume.isReading)
+        verifySuspend { controller.volumeOf(lock) }
+    }
+
+    @Test
+    fun `a volume that cannot be read keeps the opening status on the screen`() =
+        runTest(testDispatcher) {
+            val controller = controllerAnswering(
+                result = LockStatusResult.Known(isOpen = true),
+                volume = LockVolumeResult.NetworkUnavailable,
+            )
+            val viewModel = LockViewModel(controller)
+
+            viewModel.onScreenOpened(lock)
+            testScheduler.advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(LockStatus.Open, state.status)
+            assertEquals(null, state.volume.level)
+            assertEquals(LockFailure.NetworkUnavailable, state.volume.failure)
+            assertEquals(null, state.failure)
+        }
+
+    @Test
+    fun `a volume the platform does not answer shows the remembered level`() =
+        runTest(testDispatcher) {
+            val controller = controllerAnswering(
+                result = LockStatusResult.Known(isOpen = false),
+                volume = LockVolumeResult.Remembered(LockVolumeLevel.Medium),
+            )
+            val viewModel = LockViewModel(controller)
+
+            viewModel.onScreenOpened(lock)
+            testScheduler.advanceUntilIdle()
+
+            val volume = viewModel.uiState.value.volume
+            assertEquals(LockVolumeLevel.Medium, volume.level)
+            assertTrue(volume.isRemembered)
+            assertEquals(null, volume.failure)
+            assertTrue(volume.canChange)
+        }
+
+    @Test
+    fun `a remembered volume does not ask for a confirmation the platform will never give`() =
+        runTest(testDispatcher) {
+            val controller = controllerAnswering(
+                result = LockStatusResult.Known(isOpen = false),
+                volume = LockVolumeResult.Remembered(LockVolumeLevel.Medium),
+            )
+            everySuspend {
+                controller.changeVolume(any(), any())
+            } returns LockVolumeChangeResult.Done(level = LockVolumeLevel.High, confirmed = false)
+            val viewModel = LockViewModel(controller)
+            viewModel.onScreenOpened(lock)
+            testScheduler.advanceUntilIdle()
+
+            viewModel.onVolumeSelected(LockVolumeLevel.High)
+            testScheduler.advanceUntilIdle()
+
+            val volume = viewModel.uiState.value.volume
+            assertEquals(LockVolumeLevel.High, volume.level)
+            assertTrue(volume.isRemembered)
+            assertFalse(volume.awaitingConfirmation)
+        }
+
+    @Test
+    fun `choosing a volume shows the level the lock confirmed`() = runTest(testDispatcher) {
+        val controller = controllerAnswering(
+            result = LockStatusResult.Known(isOpen = false),
+            volume = LockVolumeResult.Known(LockVolumeLevel.Mute),
+        )
+        everySuspend {
+            controller.changeVolume(any(), any())
+        } returns LockVolumeChangeResult.Done(level = LockVolumeLevel.High, confirmed = true)
+        val viewModel = LockViewModel(controller)
+        viewModel.onScreenOpened(lock)
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onVolumeSelected(LockVolumeLevel.High)
+        assertTrue(viewModel.uiState.value.volume.isChanging)
+        testScheduler.advanceUntilIdle()
+
+        val volume = viewModel.uiState.value.volume
+        assertEquals(LockVolumeLevel.High, volume.level)
+        assertFalse(volume.isChanging)
+        assertFalse(volume.awaitingConfirmation)
+        verifySuspend { controller.changeVolume(lock, LockVolumeLevel.High) }
+    }
+
+    @Test
+    fun `a volume that did not confirm says so without hiding what it reported`() =
+        runTest(testDispatcher) {
+            val controller = controllerAnswering(
+                result = LockStatusResult.Known(isOpen = false),
+                volume = LockVolumeResult.Known(LockVolumeLevel.Mute),
+            )
+            everySuspend {
+                controller.changeVolume(any(), any())
+            } returns LockVolumeChangeResult.Done(level = LockVolumeLevel.Mute, confirmed = false)
+            val viewModel = LockViewModel(controller)
+            viewModel.onScreenOpened(lock)
+            testScheduler.advanceUntilIdle()
+
+            viewModel.onVolumeSelected(LockVolumeLevel.High)
+            testScheduler.advanceUntilIdle()
+
+            val volume = viewModel.uiState.value.volume
+            assertEquals(LockVolumeLevel.Mute, volume.level)
+            assertTrue(volume.awaitingConfirmation)
+            assertEquals(null, volume.failure)
+        }
+
+    @Test
+    fun `a volume the platform refuses keeps the level and explains`() = runTest(testDispatcher) {
+        val controller = controllerAnswering(
+            result = LockStatusResult.Known(isOpen = false),
+            volume = LockVolumeResult.Known(LockVolumeLevel.Low),
+        )
+        everySuspend { controller.changeVolume(any(), any()) } returns LockVolumeChangeResult.Refused
+        val viewModel = LockViewModel(controller)
+        viewModel.onScreenOpened(lock)
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onVolumeSelected(LockVolumeLevel.High)
+        testScheduler.advanceUntilIdle()
+
+        val volume = viewModel.uiState.value.volume
+        assertEquals(LockVolumeLevel.Low, volume.level)
+        assertEquals(LockFailure.Refused, volume.failure)
+        assertFalse(volume.isChanging)
+    }
+
+    @Test
+    fun `a second volume change waits for the one in flight`() = runTest(testDispatcher) {
+        val controller = controllerAnswering(
+            result = LockStatusResult.Known(isOpen = false),
+            volume = LockVolumeResult.Known(LockVolumeLevel.Mute),
+        )
+        everySuspend {
+            controller.changeVolume(any(), any())
+        } returns LockVolumeChangeResult.Done(level = LockVolumeLevel.High, confirmed = true)
+        val viewModel = LockViewModel(controller)
+        viewModel.onScreenOpened(lock)
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onVolumeSelected(LockVolumeLevel.High)
+        viewModel.onVolumeSelected(LockVolumeLevel.Low)
+        testScheduler.advanceUntilIdle()
+
+        verifySuspend(not) { controller.changeVolume(lock, LockVolumeLevel.Low) }
+    }
+
+    @Test
+    fun `changing the volume does not disturb the command in flight for the door`() =
+        runTest(testDispatcher) {
+            val controller = controllerAnswering(
+                result = LockStatusResult.Known(isOpen = false),
+                volume = LockVolumeResult.Known(LockVolumeLevel.Mute),
+            )
+            everySuspend {
+                controller.switch(any(), any())
+            } returns LockOperationResult.Done(isOpen = true, confirmed = true)
+            everySuspend {
+                controller.changeVolume(any(), any())
+            } returns LockVolumeChangeResult.Done(level = LockVolumeLevel.High, confirmed = true)
+            val viewModel = LockViewModel(controller)
+            viewModel.onScreenOpened(lock)
+            testScheduler.advanceUntilIdle()
+
+            viewModel.onOpen()
+            viewModel.onVolumeSelected(LockVolumeLevel.High)
+            testScheduler.advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(LockStatus.Open, state.status)
+            assertEquals(LockVolumeLevel.High, state.volume.level)
+        }
+
+    @Test
+    fun `retrying the volume after a failure shows that it is reading again`() =
+        runTest(testDispatcher) {
+            val controller = controllerAnswering(
+                result = LockStatusResult.Known(isOpen = false),
+                volume = LockVolumeResult.DeviceOffline,
+            )
+            val viewModel = LockViewModel(controller)
+            viewModel.onScreenOpened(lock)
+            testScheduler.advanceUntilIdle()
+
+            viewModel.onVolumeRetry()
+
+            val volume = viewModel.uiState.value.volume
+            assertTrue(volume.isReading)
+            assertEquals(null, volume.failure)
+        }
+
     private fun watching(result: LockStatusResult): LockViewModel {
         val viewModel = LockViewModel(controllerAnswering(result))
         viewModel.onScreenOpened(lock)
@@ -206,7 +420,11 @@ class LockViewModelTest {
         return viewModel
     }
 
-    private fun controllerAnswering(result: LockStatusResult) = mock<LockController> {
+    private fun controllerAnswering(
+        result: LockStatusResult,
+        volume: LockVolumeResult = LockVolumeResult.Known(LockVolumeLevel.Medium),
+    ) = mock<LockController> {
         everySuspend { statusOf(any()) } returns result
+        everySuspend { volumeOf(any()) } returns volume
     }
 }

@@ -70,6 +70,16 @@
     <string name="lock_retry">Tentar de novo</string>
     <string name="lock_switching">Enviando o comando e esperando a fechadura responder…</string>
     <string name="lock_awaiting_confirmation">A fechadura recebeu o comando mas ainda não confirmou a mudança.</string>
+    <string name="lock_volume_title">Volume da fechadura</string>
+    <string name="lock_volume_reading">Verificando…</string>
+    <string name="lock_volume_unknown">Não foi possível saber</string>
+    <string name="lock_volume_remembered">A plataforma não informa o volume desta fechadura. Este é o último nível enviado por este app.</string>
+    <string name="lock_volume_mute">Mudo</string>
+    <string name="lock_volume_low">Baixo</string>
+    <string name="lock_volume_medium">Médio</string>
+    <string name="lock_volume_high">Alto</string>
+    <string name="lock_volume_changing">Enviando o novo volume e esperando a fechadura responder…</string>
+    <string name="lock_volume_awaiting_confirmation">A fechadura recebeu o volume mas ainda não confirmou a mudança.</string>
 
     <string name="lock_failure_offline">A fechadura está offline. Verifique se a central está ligada e conectada.</string>
     <string name="lock_failure_refused">A plataforma recusou o comando. Tente de novo em instantes.</string>

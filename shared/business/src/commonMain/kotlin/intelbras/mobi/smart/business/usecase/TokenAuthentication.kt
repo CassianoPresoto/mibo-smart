@@ -6,6 +6,7 @@ import intelbras.mobi.smart.domain.auth.model.AccessToken
 import intelbras.mobi.smart.domain.device.DeviceRepository
 import intelbras.mobi.smart.domain.device.model.DeviceListQuery
 import intelbras.mobi.smart.rest.SmartHomeNetworkException
+import intelbras.mobi.smart.rest.SmartHomeUnknownPlatformErrorException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 
@@ -35,6 +36,7 @@ internal class TokenAuthentication(
 
     private fun Throwable.toAuthenticationResult(): AuthenticationResult = when {
         rejectsTheAccessToken() -> AuthenticationResult.InvalidToken
+        this is SmartHomeUnknownPlatformErrorException -> AuthenticationResult.InvalidToken
         this is SmartHomeNetworkException -> AuthenticationResult.NetworkUnavailable
         else -> AuthenticationResult.Error(this)
     }
