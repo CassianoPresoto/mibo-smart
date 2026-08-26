@@ -9,7 +9,6 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 internal fun AccountRoute(
     onSignedOut: () -> Unit,
-    onLeave: () -> Unit,
     viewModel: AccountViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -22,6 +21,5 @@ internal fun AccountRoute(
         uiState = uiState,
         onDarkThemeToggled = viewModel::onDarkThemeToggled,
         onSignOut = viewModel::onSignOut,
-        onLeave = onLeave,
     )
 }

@@ -4,6 +4,7 @@ import intelbras.mobi.smart.business.di.businessModule
 import intelbras.mobi.smart.persistence.SmartHomePersistenceFactory
 import intelbras.mobi.smart.ui.feature.account.AccountViewModel
 import intelbras.mobi.smart.ui.feature.devices.DeviceListViewModel
+import intelbras.mobi.smart.ui.feature.activity.ActivityViewModel
 import intelbras.mobi.smart.ui.feature.lock.LockViewModel
 import intelbras.mobi.smart.ui.feature.lock.history.OpeningHistoryViewModel
 import intelbras.mobi.smart.ui.feature.session.SessionViewModel
@@ -27,6 +28,7 @@ fun startSmartHomeDependencies(
 private fun presentationModule(): Module = module {
     viewModelOf(::AccountViewModel)
     viewModelOf(::AppThemeViewModel)
+    viewModelOf(::ActivityViewModel)
     viewModelOf(::LockViewModel)
     viewModelOf(::OpeningHistoryViewModel)
     viewModelOf(::SessionViewModel)

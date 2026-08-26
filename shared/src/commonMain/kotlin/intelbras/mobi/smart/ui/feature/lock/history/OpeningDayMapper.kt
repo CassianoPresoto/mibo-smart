@@ -19,6 +19,8 @@ internal fun List<LockOpening>.toDays(today: LocalDate): List<OpeningDayUiModel>
             )
         }
 
+internal fun dayLabelOf(date: LocalDate?, today: LocalDate): OpeningDayLabel = date.toLabel(today)
+
 private fun LocalDate?.toLabel(today: LocalDate): OpeningDayLabel = when (this) {
     null -> OpeningDayLabel.Undated
     today -> OpeningDayLabel.Today

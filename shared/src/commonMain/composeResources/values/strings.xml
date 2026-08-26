@@ -99,6 +99,15 @@
     <string name="lock_volume_awaiting_confirmation">A fechadura recebeu o volume mas ainda não confirmou a mudança.</string>
     <string name="lock_history_title">Últimas aberturas</string>
     <string name="lock_history_see_all">Ver tudo ›</string>
+    <string name="activity_title">Atividade</string>
+    <string name="activity_subtitle">Aberturas das suas fechaduras</string>
+    <string name="activity_loading">Carregando a atividade…</string>
+    <string name="activity_empty">Nenhuma abertura registrada até agora.</string>
+    <string name="activity_no_locks">Você ainda não tem uma fechadura nesta conta.</string>
+    <string name="activity_unavailable">A plataforma não conseguiu trazer a atividade agora.</string>
+    <string name="navigation_devices">Dispositivos</string>
+    <string name="navigation_activity">Atividade</string>
+    <string name="navigation_account">Conta</string>
     <string name="opening_history_title">Histórico de abertura</string>
     <string name="opening_history_subtitle">%1$s · últimas aberturas</string>
     <string name="opening_history_back">Voltar</string>

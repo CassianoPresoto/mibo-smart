@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -20,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import intelbras.mobi.smart.domain.preferences.model.ThemeMode
-import intelbras.mobi.smart.ui.component.MiboBackButton
 import intelbras.mobi.smart.ui.component.MiboCard
 import intelbras.mobi.smart.ui.component.MiboDangerButton
 import intelbras.mobi.smart.ui.component.MiboDetailRow
@@ -31,7 +29,6 @@ import intelbras.mobi.smart.ui.theme.MiboTheme
 import intelbras.mobi.smart.ui.theme.resolvesToDark
 import kotlin.time.Duration.Companion.minutes
 import mibosmart.shared.generated.resources.Res
-import mibosmart.shared.generated.resources.account_back
 import mibosmart.shared.generated.resources.account_session_expires_in
 import mibosmart.shared.generated.resources.account_session_title
 import mibosmart.shared.generated.resources.account_session_token
@@ -47,7 +44,6 @@ internal fun AccountScreen(
     uiState: AccountUiState,
     onDarkThemeToggled: (Boolean) -> Unit,
     onSignOut: () -> Unit,
-    onLeave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -56,7 +52,7 @@ internal fun AccountScreen(
             .background(MiboTheme.colors.background)
             .statusBarsPadding(),
     ) {
-        AccountHeader(onLeave = onLeave)
+        AccountHeader()
 
         Column(
             modifier = Modifier
@@ -64,8 +60,7 @@ internal fun AccountScreen(
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = MiboSmartSize.listPadding)
-                .padding(bottom = MiboSmartSpacing.lg)
-                .navigationBarsPadding(),
+                .padding(bottom = MiboSmartSpacing.lg),
         ) {
             SessionCard(uiState)
             Spacer(Modifier.height(MiboSmartSpacing.md))
@@ -84,7 +79,7 @@ internal fun AccountScreen(
 }
 
 @Composable
-private fun AccountHeader(onLeave: () -> Unit) {
+private fun AccountHeader() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -97,10 +92,6 @@ private fun AccountHeader(onLeave: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(MiboSmartSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        MiboBackButton(
-            description = stringResource(Res.string.account_back),
-            onClick = onLeave,
-        )
         Text(
             text = stringResource(Res.string.account_title),
             style = MiboTheme.typography.display,
@@ -173,7 +164,6 @@ private fun AccountScreenPreview() {
             uiState = previewState,
             onDarkThemeToggled = {},
             onSignOut = {},
-            onLeave = {},
         )
     }
 }
@@ -186,7 +176,6 @@ private fun AccountScreenDarkPreview() {
             uiState = previewState.copy(themeMode = ThemeMode.Dark),
             onDarkThemeToggled = {},
             onSignOut = {},
-            onLeave = {},
         )
     }
 }
