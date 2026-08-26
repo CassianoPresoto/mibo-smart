@@ -11,11 +11,15 @@ import intelbras.mobi.smart.business.usecase.VideoPlaybackState
 import intelbras.mobi.smart.domain.device.model.DeviceReference
 import intelbras.mobi.smart.domain.playback.VideoPlayer
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+
+internal const val USAGE_POLL_INTERVAL_MS = 5_000L
 
 class LiveVideoViewModel(
     private val videoPlayback: VideoPlayback,
@@ -30,6 +34,7 @@ class LiveVideoViewModel(
 
     private var watched: WatchedDevice? = null
     private var playback: Job? = null
+    private var usagePolling: Job? = null
 
     fun onScreenOpened(device: DeviceReference, player: VideoPlayer) {
         watched = WatchedDevice(device, player)
@@ -38,27 +43,23 @@ class LiveVideoViewModel(
 
     fun onRetry() = startPlayback()
 
-    fun onDetailsToggled() {
-        val expanded = !mutableDetails.value.isExpanded
-        mutableDetails.update { details -> details.copy(isExpanded = expanded) }
-
-        if (expanded) readUsage()
-    }
-
     fun onScreenClosed() {
         playback?.cancel()
         playback = null
         watched = null
+        stopUsagePolling()
     }
 
     override fun onCleared() {
         playback?.cancel()
+        usagePolling?.cancel()
     }
 
     private fun startPlayback() {
         val watched = watched ?: return
 
         playback?.cancel()
+        stopUsagePolling()
         mutableUiState.value = LiveVideoUiState.Connecting
         playback = viewModelScope.launch {
             videoPlayback.play(watched.device, watched.player).collect { state ->
@@ -77,19 +78,31 @@ class LiveVideoViewModel(
                 usage = if (isNewSession) null else details.usage,
             )
         }
-        if (mutableDetails.value.isExpanded) readUsage()
+        if (isNewSession) startUsagePolling(session.sessionId)
     }
 
-    private fun readUsage() {
-        val sessionId = mutableDetails.value.sessionId
-        if (sessionId.isBlank()) return
-
-        mutableDetails.update { details -> details.copy(isReadingUsage = true) }
-        viewModelScope.launch {
-            val measured = streamingMonitor.usageOf(sessionId).toUsage()
-            mutableDetails.update { details ->
-                details.copy(isReadingUsage = false, usage = measured)
+    private fun startUsagePolling(sessionId: String) {
+        stopUsagePolling()
+        usagePolling = viewModelScope.launch {
+            while (isActive) {
+                fetchUsage(sessionId)
+                delay(USAGE_POLL_INTERVAL_MS)
             }
+        }
+    }
+
+    private fun stopUsagePolling() {
+        usagePolling?.cancel()
+        usagePolling = null
+    }
+
+    private suspend fun fetchUsage(sessionId: String) {
+        val isFirstReading = mutableDetails.value.usage == null
+        if (isFirstReading) mutableDetails.update { details -> details.copy(isReadingUsage = true) }
+
+        val measured = streamingMonitor.usageOf(sessionId).toUsage()
+        mutableDetails.update { details ->
+            details.copy(isReadingUsage = false, usage = measured ?: details.usage)
         }
     }
 

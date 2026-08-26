@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -93,6 +96,29 @@ fun MiboSquareIconButton(
             text = symbol,
             fontSize = 15.sp,
             color = if (enabled) colors.text else colors.muted,
+        )
+    }
+}
+
+@Composable
+fun MiboBackButton(
+    description: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MiboTheme.colors
+    Box(
+        modifier = modifier.size(36.dp).clip(MiboSmartShapes.medium).background(colors.surface)
+            .border(MiboSmartSize.hairline, colors.outline, MiboSmartShapes.medium)
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = null,
+            tint = colors.text,
+            modifier = Modifier.size(18.dp),
         )
     }
 }
@@ -194,6 +220,7 @@ private fun MiboComponentsPreview() {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     MiboSquareIconButton(symbol = "⚙", description = "Configurações", onClick = {})
                     MiboAccountAvatar(initials = "MS", description = "Conta", onClick = {})
+                    MiboBackButton(description = "Voltar", onClick = {})
                 }
                 MiboCodeChip(text = "ABC-123")
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {

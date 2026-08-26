@@ -73,9 +73,10 @@ class LiveVideoViewModelTest {
         val viewModel = LiveVideoViewModel(playback, streamingMonitor)
 
         viewModel.onScreenOpened(camera, player)
-        testScheduler.advanceUntilIdle()
+        testScheduler.runCurrent()
 
         assertEquals(LiveVideoUiState.Playing, viewModel.uiState.value)
+        viewModel.onScreenClosed()
     }
 
     @Test
@@ -123,10 +124,10 @@ class LiveVideoViewModelTest {
         val playback = playbackOf(VideoPlaybackState.Playing(session))
         val viewModel = LiveVideoViewModel(playback, streamingMonitor)
         viewModel.onScreenOpened(camera, player)
-        testScheduler.advanceUntilIdle()
+        testScheduler.runCurrent()
 
         viewModel.onRetry()
-        testScheduler.advanceUntilIdle()
+        testScheduler.runCurrent()
 
         verify(exhaustiveOrder) {
             playback.play(camera, player)
@@ -143,22 +144,13 @@ class LiveVideoViewModelTest {
         val viewModel = LiveVideoViewModel(playback, streamingMonitor)
         viewModel.onScreenOpened(camera, player)
         states.emit(VideoPlaybackState.Playing(session))
-        testScheduler.advanceUntilIdle()
+        testScheduler.runCurrent()
 
         viewModel.onScreenClosed()
         states.emit(VideoPlaybackState.Ended)
-        testScheduler.advanceUntilIdle()
+        testScheduler.runCurrent()
 
         assertEquals(LiveVideoUiState.Playing, viewModel.uiState.value)
-    }
-
-    @Test
-    fun `keeps the details closed until someone asks for them`() = runTest(testDispatcher) {
-        val viewModel = viewModelWith(playbackOf(VideoPlaybackState.Playing(session)))
-        viewModel.onScreenOpened(camera, player)
-        testScheduler.advanceUntilIdle()
-
-        assertEquals(false, viewModel.details.value.isExpanded)
     }
 
     @Test
@@ -166,15 +158,16 @@ class LiveVideoViewModelTest {
         val viewModel = viewModelWith(playbackOf(VideoPlaybackState.Playing(session)))
 
         viewModel.onScreenOpened(camera, player)
-        testScheduler.advanceUntilIdle()
+        testScheduler.runCurrent()
 
         val details = viewModel.details.value
         assertEquals("session-1", details.sessionId)
         assertEquals(1.0, details.quotaGb)
+        viewModel.onScreenClosed()
     }
 
     @Test
-    fun `opening the details reads how much the session consumed`() = runTest(testDispatcher) {
+    fun `starts reading the session usage as soon as it starts playing`() = runTest(testDispatcher) {
         everySuspend { streamingMonitor.usageOf(any()) } returns StreamingUsageResult.Measured(
             StreamingUsage(
                 consumedBytes = 5_242_880L,
@@ -184,44 +177,60 @@ class LiveVideoViewModelTest {
             ),
         )
         val viewModel = viewModelWith(playbackOf(VideoPlaybackState.Playing(session)))
-        viewModel.onScreenOpened(camera, player)
-        testScheduler.advanceUntilIdle()
 
-        viewModel.onDetailsToggled()
-        testScheduler.advanceUntilIdle()
+        viewModel.onScreenOpened(camera, player)
+        testScheduler.runCurrent()
 
         val details = viewModel.details.value
-        assertEquals(true, details.isExpanded)
         assertEquals(LiveVideoUsage(5_242_880L, 0.8, isSessionActive = true), details.usage)
         verifySuspend { streamingMonitor.usageOf("session-1") }
+        viewModel.onScreenClosed()
     }
 
     @Test
     fun `the details survive a session the platform does not describe`() = runTest(testDispatcher) {
         val viewModel = viewModelWith(playbackOf(VideoPlaybackState.Playing(session)))
-        viewModel.onScreenOpened(camera, player)
-        testScheduler.advanceUntilIdle()
 
-        viewModel.onDetailsToggled()
-        testScheduler.advanceUntilIdle()
+        viewModel.onScreenOpened(camera, player)
+        testScheduler.runCurrent()
 
         assertEquals(null, viewModel.details.value.usage)
         assertEquals(false, viewModel.details.value.isReadingUsage)
+        viewModel.onScreenClosed()
     }
 
     @Test
-    fun `closing the details asks nothing`() = runTest(testDispatcher) {
+    fun `keeps refreshing the session usage while the screen stays open`() = runTest(testDispatcher) {
+        everySuspend { streamingMonitor.usageOf(any()) } returns StreamingUsageResult.Measured(
+            StreamingUsage(
+                consumedBytes = 1_048_576L,
+                remainingQuotaGb = 0.9,
+                isActive = true,
+                quotaExceeded = false,
+            ),
+        )
         val viewModel = viewModelWith(playbackOf(VideoPlaybackState.Playing(session)))
         viewModel.onScreenOpened(camera, player)
-        testScheduler.advanceUntilIdle()
-        viewModel.onDetailsToggled()
-        testScheduler.advanceUntilIdle()
+        testScheduler.runCurrent()
 
-        viewModel.onDetailsToggled()
-        testScheduler.advanceUntilIdle()
+        testScheduler.advanceTimeBy(USAGE_POLL_INTERVAL_MS * 3)
+        testScheduler.runCurrent()
 
-        assertEquals(false, viewModel.details.value.isExpanded)
-        verifySuspend(VerifyMode.exhaustive) { streamingMonitor.usageOf("session-1") }
+        verifySuspend(VerifyMode.atLeast(4)) { streamingMonitor.usageOf("session-1") }
+        viewModel.onScreenClosed()
+    }
+
+    @Test
+    fun `stops refreshing the usage after leaving the screen`() = runTest(testDispatcher) {
+        val viewModel = viewModelWith(playbackOf(VideoPlaybackState.Playing(session)))
+        viewModel.onScreenOpened(camera, player)
+        testScheduler.runCurrent()
+
+        viewModel.onScreenClosed()
+        testScheduler.advanceTimeBy(USAGE_POLL_INTERVAL_MS * 3)
+        testScheduler.runCurrent()
+
+        verifySuspend(VerifyMode.exactly(1)) { streamingMonitor.usageOf("session-1") }
     }
 
     private fun viewModelFailingWith(failure: VideoPlaybackFailure): LiveVideoViewModel {
