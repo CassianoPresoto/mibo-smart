@@ -2,6 +2,7 @@ package intelbras.mobi.smart.ui.feature.lock
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -39,6 +41,11 @@ import mibosmart.shared.generated.resources.Res
 import mibosmart.shared.generated.resources.lock_awaiting_confirmation
 import mibosmart.shared.generated.resources.lock_back
 import mibosmart.shared.generated.resources.lock_close
+import mibosmart.shared.generated.resources.lock_history_empty
+import mibosmart.shared.generated.resources.lock_history_loading
+import mibosmart.shared.generated.resources.lock_history_title
+import mibosmart.shared.generated.resources.lock_history_unavailable
+import mibosmart.shared.generated.resources.lock_history_way_remote_app
 import mibosmart.shared.generated.resources.lock_open
 import mibosmart.shared.generated.resources.lock_retry
 import mibosmart.shared.generated.resources.lock_status_checking
@@ -73,6 +80,7 @@ internal fun LockScreen(
     onRetry: () -> Unit,
     onVolumeSelected: (LockVolumeLevel) -> Unit,
     onVolumeRetry: () -> Unit,
+    onHistoryRetry: () -> Unit,
     onLeave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -91,6 +99,7 @@ internal fun LockScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
         ) {
             LockStatusCard(uiState = uiState, lockModel = lockModel, onRetry = onRetry)
@@ -102,6 +111,8 @@ internal fun LockScreen(
                 onVolumeSelected = onVolumeSelected,
                 onRetry = onVolumeRetry,
             )
+            Spacer(Modifier.height(24.dp))
+            LockHistoryCard(uiState = uiState.history, onRetry = onHistoryRetry)
         }
     }
 }
@@ -226,6 +237,83 @@ private fun LockVolumeCard(
 }
 
 @Composable
+private fun LockHistoryCard(uiState: LockHistoryUiState, onRetry: () -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Text(
+                text = stringResource(Res.string.lock_history_title),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(12.dp))
+
+            when {
+                uiState.isLoading -> LockVolumeNote(Res.string.lock_history_loading)
+                uiState.isUnavailable -> LockVolumeNote(Res.string.lock_history_unavailable)
+                uiState.isEmpty -> LockVolumeNote(Res.string.lock_history_empty)
+                else -> LockOpeningList(uiState.openings)
+            }
+
+            uiState.failure?.let { failure ->
+                Spacer(Modifier.height(12.dp))
+                LockFailureMessage(
+                    failure = failure,
+                    onRetry = onRetry,
+                    canRetry = !uiState.isLoading,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LockOpeningList(openings: List<LockOpeningUiModel>) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        openings.forEachIndexed { position, opening ->
+            if (position > 0) {
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 10.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                )
+            }
+            LockOpeningRow(opening)
+        }
+    }
+}
+
+@Composable
+private fun LockOpeningRow(opening: LockOpeningUiModel) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = opening.happenedAt,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text(
+                text = opening.way.label(),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Text(
+            text = opening.user,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun LockOpeningWayUiModel.label(): String = when (this) {
+    LockOpeningWayUiModel.RemoteApp -> stringResource(Res.string.lock_history_way_remote_app)
+    is LockOpeningWayUiModel.Unrecognized -> name
+}
+
+@Composable
 private fun LockVolumeChoices(
     uiState: LockVolumeUiState,
     onVolumeSelected: (LockVolumeLevel) -> Unit,
@@ -317,6 +405,46 @@ private fun LockScreenClosedPreview() {
         LockUiState(
             status = LockStatus.Closed,
             volume = LockVolumeUiState(level = LockVolumeLevel.Medium, isReading = false),
+        ),
+    )
+}
+
+@Preview
+@Composable
+private fun LockScreenWithHistoryPreview() {
+    PreviewScreen(
+        LockUiState(
+            status = LockStatus.Closed,
+            volume = LockVolumeUiState(level = LockVolumeLevel.Medium, isReading = false),
+            history = LockHistoryUiState(
+                openings = listOf(
+                    LockOpeningUiModel(
+                        id = "1",
+                        happenedAt = "25/08/2026 17:21",
+                        user = "APP",
+                        way = LockOpeningWayUiModel.RemoteApp,
+                    ),
+                    LockOpeningUiModel(
+                        id = "2",
+                        happenedAt = "25/08/2026 13:21",
+                        user = "Cassiano",
+                        way = LockOpeningWayUiModel.Unrecognized("senha"),
+                    ),
+                ),
+                isLoading = false,
+            ),
+        ),
+    )
+}
+
+@Preview
+@Composable
+private fun LockScreenEmptyHistoryPreview() {
+    PreviewScreen(
+        LockUiState(
+            status = LockStatus.Closed,
+            volume = LockVolumeUiState(level = LockVolumeLevel.Mute, isReading = false),
+            history = LockHistoryUiState(isLoading = false),
         ),
     )
 }
@@ -416,6 +544,7 @@ private fun PreviewScreen(uiState: LockUiState) {
                 onRetry = {},
                 onVolumeSelected = {},
                 onVolumeRetry = {},
+                onHistoryRetry = {},
                 onLeave = {},
             )
         }

@@ -20,8 +20,7 @@ data class RemoteOpeningStatus(
 
 @Serializable
 data class LockOpeningRecord(
-    @SerialName("data") val timestamp: String = "",
-    @SerialName("tipo") val type: String = "",
-    @SerialName("usuario") val user: String = "",
-    @SerialName("idUsuario") val userId: Int? = null,
+    @SerialName("tempoLocal") val localTime: String = "",
+    @SerialName("nome") val user: String = "",
+    @SerialName("tipo") val way: String = "",
 )

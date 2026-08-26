@@ -1,5 +1,6 @@
 package intelbras.mobi.smart.business
 
+import intelbras.mobi.smart.business.usecase.LockHistoryResult
 import intelbras.mobi.smart.business.usecase.LockOperationResult
 import intelbras.mobi.smart.business.usecase.LockStatusResult
 import intelbras.mobi.smart.business.usecase.LockVolumeChangeResult
@@ -15,4 +16,6 @@ interface LockController {
     suspend fun volumeOf(lock: DeviceReference): LockVolumeResult
 
     suspend fun changeVolume(lock: DeviceReference, level: LockVolumeLevel): LockVolumeChangeResult
+
+    suspend fun historyOf(lock: DeviceReference, limit: Int): LockHistoryResult
 }

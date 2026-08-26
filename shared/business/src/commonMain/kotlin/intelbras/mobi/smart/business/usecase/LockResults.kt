@@ -55,3 +55,17 @@ sealed interface LockVolumeChangeResult {
 
     data class Error(val cause: Throwable) : LockVolumeChangeResult
 }
+
+sealed interface LockHistoryResult {
+    data class Loaded(val openings: List<LockOpening>) : LockHistoryResult
+
+    data object Unavailable : LockHistoryResult
+
+    data object DeviceOffline : LockHistoryResult
+
+    data object InvalidToken : LockHistoryResult
+
+    data object NetworkUnavailable : LockHistoryResult
+
+    data class Error(val cause: Throwable) : LockHistoryResult
+}

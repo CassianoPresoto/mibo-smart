@@ -24,6 +24,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":shared:domain"))
+            api(libs.kotlinx.datetime)
             api(project(":shared:persistence"))
             implementation(project(":shared:rest"))
             implementation(libs.koin.core)

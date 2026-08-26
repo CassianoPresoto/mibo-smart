@@ -8,6 +8,9 @@ import dev.mokkery.mock
 import dev.mokkery.verify.VerifyMode.Companion.not
 import dev.mokkery.verifySuspend
 import intelbras.mobi.smart.business.LockController
+import intelbras.mobi.smart.business.usecase.LockHistoryResult
+import intelbras.mobi.smart.business.usecase.LockOpening
+import intelbras.mobi.smart.business.usecase.LockOpeningWay
 import intelbras.mobi.smart.business.usecase.LockOperationResult
 import intelbras.mobi.smart.business.usecase.LockStatusResult
 import intelbras.mobi.smart.business.usecase.LockVolumeChangeResult
@@ -15,6 +18,7 @@ import intelbras.mobi.smart.business.usecase.LockVolumeResult
 import intelbras.mobi.smart.domain.device.model.DeviceReference
 import intelbras.mobi.smart.domain.lock.model.LockVolumeLevel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.datetime.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -178,6 +182,7 @@ class LockViewModelTest {
                 returns(LockStatusResult.Known(isOpen = true))
             }
             everySuspend { volumeOf(any()) } returns LockVolumeResult.Known(LockVolumeLevel.Low)
+            everySuspend { historyOf(any(), any()) } returns LockHistoryResult.Loaded(emptyList())
         }
         val viewModel = LockViewModel(controller)
         viewModel.onScreenOpened(lock)
@@ -413,6 +418,79 @@ class LockViewModelTest {
             assertEquals(null, volume.failure)
         }
 
+    @Test
+    fun `loads the opening history as soon as the screen opens`() = runTest(testDispatcher) {
+        val controller = controllerAnswering(
+            result = LockStatusResult.Known(isOpen = false),
+            history = LockHistoryResult.Loaded(
+                listOf(
+                    LockOpening(
+                        happenedAt = LocalDateTime(2026, 8, 25, 17, 21, 7),
+                        user = "APP",
+                        way = LockOpeningWay.RemoteApp,
+                    )
+                )
+            ),
+        )
+        val viewModel = LockViewModel(controller)
+
+        viewModel.onScreenOpened(lock)
+        assertTrue(viewModel.uiState.value.history.isLoading)
+        testScheduler.advanceUntilIdle()
+
+        val history = viewModel.uiState.value.history
+        assertEquals("25/08/2026 17:21", history.openings.single().happenedAt)
+        assertFalse(history.isLoading)
+        verifySuspend { controller.historyOf(lock, any()) }
+    }
+
+    @Test
+    fun `a lock without openings shows an empty history instead of a failure`() =
+        runTest(testDispatcher) {
+            val viewModel = watching(LockStatusResult.Known(isOpen = false))
+
+            val history = viewModel.uiState.value.history
+            assertTrue(history.isEmpty)
+            assertEquals(null, history.failure)
+        }
+
+    @Test
+    fun `a history the platform cannot bring keeps the rest of the screen working`() =
+        runTest(testDispatcher) {
+            val controller = controllerAnswering(
+                result = LockStatusResult.Known(isOpen = true),
+                history = LockHistoryResult.Unavailable,
+            )
+            val viewModel = LockViewModel(controller)
+
+            viewModel.onScreenOpened(lock)
+            testScheduler.advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(LockStatus.Open, state.status)
+            assertTrue(state.history.isUnavailable)
+            assertEquals(null, state.history.failure)
+        }
+
+    @Test
+    fun `retrying the history after a failure shows that it is loading again`() =
+        runTest(testDispatcher) {
+            val controller = controllerAnswering(
+                result = LockStatusResult.Known(isOpen = false),
+                history = LockHistoryResult.NetworkUnavailable,
+            )
+            val viewModel = LockViewModel(controller)
+            viewModel.onScreenOpened(lock)
+            testScheduler.advanceUntilIdle()
+            assertEquals(LockFailure.NetworkUnavailable, viewModel.uiState.value.history.failure)
+
+            viewModel.onHistoryRetry()
+
+            val history = viewModel.uiState.value.history
+            assertTrue(history.isLoading)
+            assertEquals(null, history.failure)
+        }
+
     private fun watching(result: LockStatusResult): LockViewModel {
         val viewModel = LockViewModel(controllerAnswering(result))
         viewModel.onScreenOpened(lock)
@@ -423,8 +501,10 @@ class LockViewModelTest {
     private fun controllerAnswering(
         result: LockStatusResult,
         volume: LockVolumeResult = LockVolumeResult.Known(LockVolumeLevel.Medium),
+        history: LockHistoryResult = LockHistoryResult.Loaded(emptyList()),
     ) = mock<LockController> {
         everySuspend { statusOf(any()) } returns result
         everySuspend { volumeOf(any()) } returns volume
+        everySuspend { historyOf(any(), any()) } returns history
     }
 }
