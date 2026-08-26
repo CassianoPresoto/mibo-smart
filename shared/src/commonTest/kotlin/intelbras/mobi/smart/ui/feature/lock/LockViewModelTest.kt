@@ -5,9 +5,14 @@ import dev.mokkery.answering.sequentially
 import dev.mokkery.everySuspend
 import dev.mokkery.matcher.any
 import dev.mokkery.mock
+import dev.mokkery.verify.VerifyMode
 import dev.mokkery.verify.VerifyMode.Companion.not
 import dev.mokkery.verifySuspend
 import intelbras.mobi.smart.business.LockController
+import intelbras.mobi.smart.business.usecase.LockDetails
+import intelbras.mobi.smart.business.usecase.LockHistoryResult
+import intelbras.mobi.smart.business.usecase.LockOpening
+import intelbras.mobi.smart.business.usecase.LockOpeningWay
 import intelbras.mobi.smart.business.usecase.LockOperationResult
 import intelbras.mobi.smart.business.usecase.LockStatusResult
 import intelbras.mobi.smart.business.usecase.LockVolumeChangeResult
@@ -15,6 +20,7 @@ import intelbras.mobi.smart.business.usecase.LockVolumeResult
 import intelbras.mobi.smart.domain.device.model.DeviceReference
 import intelbras.mobi.smart.domain.lock.model.LockVolumeLevel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.datetime.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -89,7 +95,7 @@ class LockViewModelTest {
         viewModel.onScreenOpened(lock)
         testScheduler.advanceUntilIdle()
 
-        viewModel.onOpen()
+        viewModel.onToggle()
         assertTrue(viewModel.uiState.value.isSwitching)
         testScheduler.advanceUntilIdle()
 
@@ -111,7 +117,7 @@ class LockViewModelTest {
             viewModel.onScreenOpened(lock)
             testScheduler.advanceUntilIdle()
 
-            viewModel.onOpen()
+            viewModel.onToggle()
             testScheduler.advanceUntilIdle()
 
             val state = viewModel.uiState.value
@@ -130,7 +136,7 @@ class LockViewModelTest {
         viewModel.onScreenOpened(lock)
         testScheduler.advanceUntilIdle()
 
-        viewModel.onClose()
+        viewModel.onToggle()
         testScheduler.advanceUntilIdle()
 
         verifySuspend { controller.switch(lock, false) }
@@ -144,7 +150,7 @@ class LockViewModelTest {
         viewModel.onScreenOpened(lock)
         testScheduler.advanceUntilIdle()
 
-        viewModel.onOpen()
+        viewModel.onToggle()
         testScheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -163,11 +169,11 @@ class LockViewModelTest {
         viewModel.onScreenOpened(lock)
         testScheduler.advanceUntilIdle()
 
-        viewModel.onOpen()
-        viewModel.onClose()
+        viewModel.onToggle()
+        viewModel.onToggle()
         testScheduler.advanceUntilIdle()
 
-        verifySuspend(not) { controller.switch(lock, false) }
+        verifySuspend(VerifyMode.exactly(1)) { controller.switch(lock, true) }
     }
 
     @Test
@@ -178,6 +184,8 @@ class LockViewModelTest {
                 returns(LockStatusResult.Known(isOpen = true))
             }
             everySuspend { volumeOf(any()) } returns LockVolumeResult.Known(LockVolumeLevel.Low)
+            everySuspend { historyOf(any(), any()) } returns LockHistoryResult.Loaded(emptyList())
+            everySuspend { detailsOf(any()) } returns LockDetails()
         }
         val viewModel = LockViewModel(controller)
         viewModel.onScreenOpened(lock)
@@ -386,7 +394,7 @@ class LockViewModelTest {
             viewModel.onScreenOpened(lock)
             testScheduler.advanceUntilIdle()
 
-            viewModel.onOpen()
+            viewModel.onToggle()
             viewModel.onVolumeSelected(LockVolumeLevel.High)
             testScheduler.advanceUntilIdle()
 
@@ -413,6 +421,204 @@ class LockViewModelTest {
             assertEquals(null, volume.failure)
         }
 
+    @Test
+    fun `loads the opening history as soon as the screen opens`() = runTest(testDispatcher) {
+        val controller = controllerAnswering(
+            result = LockStatusResult.Known(isOpen = false),
+            history = LockHistoryResult.Loaded(
+                listOf(
+                    LockOpening(
+                        happenedAt = LocalDateTime(2026, 8, 25, 17, 21, 7),
+                        user = "APP",
+                        way = LockOpeningWay.RemoteApp,
+                    )
+                )
+            ),
+        )
+        val viewModel = LockViewModel(controller)
+
+        viewModel.onScreenOpened(lock)
+        assertTrue(viewModel.uiState.value.history.isLoading)
+        testScheduler.advanceUntilIdle()
+
+        val history = viewModel.uiState.value.history
+        assertEquals("25/08/2026 17:21", history.openings.single().happenedAt)
+        assertFalse(history.isLoading)
+        verifySuspend { controller.historyOf(lock, any()) }
+    }
+
+    @Test
+    fun `the card shows only the five most recent openings`() = runTest(testDispatcher) {
+        val controller = controllerAnswering(
+            result = LockStatusResult.Known(isOpen = false),
+            history = LockHistoryResult.Loaded(
+                List(8) { position ->
+                    LockOpening(
+                        happenedAt = LocalDateTime(2026, 8, 25, 17, position),
+                        user = "APP",
+                        way = LockOpeningWay.RemoteApp,
+                    )
+                }
+            ),
+        )
+        val viewModel = LockViewModel(controller)
+
+        viewModel.onScreenOpened(lock)
+        testScheduler.advanceUntilIdle()
+
+        val history = viewModel.uiState.value.history
+        assertEquals(8, history.openings.size)
+        assertEquals(5, history.latest.size)
+        assertEquals(history.openings.take(5), history.latest)
+    }
+
+    @Test
+    fun `a lock without openings shows an empty history instead of a failure`() =
+        runTest(testDispatcher) {
+            val viewModel = watching(LockStatusResult.Known(isOpen = false))
+
+            val history = viewModel.uiState.value.history
+            assertTrue(history.isEmpty)
+            assertEquals(null, history.failure)
+        }
+
+    @Test
+    fun `a history the platform cannot bring keeps the rest of the screen working`() =
+        runTest(testDispatcher) {
+            val controller = controllerAnswering(
+                result = LockStatusResult.Known(isOpen = true),
+                history = LockHistoryResult.Unavailable,
+            )
+            val viewModel = LockViewModel(controller)
+
+            viewModel.onScreenOpened(lock)
+            testScheduler.advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(LockStatus.Open, state.status)
+            assertTrue(state.history.isUnavailable)
+            assertEquals(null, state.history.failure)
+        }
+
+    @Test
+    fun `retrying the history after a failure shows that it is loading again`() =
+        runTest(testDispatcher) {
+            val controller = controllerAnswering(
+                result = LockStatusResult.Known(isOpen = false),
+                history = LockHistoryResult.NetworkUnavailable,
+            )
+            val viewModel = LockViewModel(controller)
+            viewModel.onScreenOpened(lock)
+            testScheduler.advanceUntilIdle()
+            assertEquals(LockFailure.NetworkUnavailable, viewModel.uiState.value.history.failure)
+
+            viewModel.onHistoryRetry()
+
+            val history = viewModel.uiState.value.history
+            assertTrue(history.isLoading)
+            assertEquals(null, history.failure)
+        }
+
+    @Test
+    fun `tapping the dial opens a lock that is closed`() = runTest(testDispatcher) {
+        val controller = controllerAnswering(LockStatusResult.Known(isOpen = false))
+        everySuspend {
+            controller.switch(any(), any())
+        } returns LockOperationResult.Done(isOpen = true, confirmed = true)
+        val viewModel = LockViewModel(controller)
+        viewModel.onScreenOpened(lock)
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onToggle()
+        testScheduler.advanceUntilIdle()
+
+        verifySuspend { controller.switch(lock, true) }
+        assertEquals(LockStatus.Open, viewModel.uiState.value.status)
+    }
+
+    @Test
+    fun `a command that goes through refreshes the openings without leaving the screen`() =
+        runTest(testDispatcher) {
+            val controller = controllerAnswering(LockStatusResult.Known(isOpen = false))
+            everySuspend {
+                controller.switch(any(), any())
+            } returns LockOperationResult.Done(isOpen = true, confirmed = true)
+            val viewModel = LockViewModel(controller)
+            viewModel.onScreenOpened(lock)
+            testScheduler.advanceUntilIdle()
+
+            viewModel.onToggle()
+            testScheduler.advanceUntilIdle()
+
+            verifySuspend(VerifyMode.exactly(2)) { controller.historyOf(lock, any()) }
+        }
+
+    @Test
+    fun `a command the platform refuses does not refresh the openings`() = runTest(testDispatcher) {
+        val controller = controllerAnswering(LockStatusResult.Known(isOpen = false))
+        everySuspend { controller.switch(any(), any()) } returns LockOperationResult.Refused
+        val viewModel = LockViewModel(controller)
+        viewModel.onScreenOpened(lock)
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onToggle()
+        testScheduler.advanceUntilIdle()
+
+        verifySuspend(VerifyMode.exactly(1)) { controller.historyOf(lock, any()) }
+    }
+
+    @Test
+    fun `tapping the dial closes a lock that is open`() = runTest(testDispatcher) {
+        val controller = controllerAnswering(LockStatusResult.Known(isOpen = true))
+        everySuspend {
+            controller.switch(any(), any())
+        } returns LockOperationResult.Done(isOpen = false, confirmed = true)
+        val viewModel = LockViewModel(controller)
+        viewModel.onScreenOpened(lock)
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onToggle()
+        testScheduler.advanceUntilIdle()
+
+        verifySuspend { controller.switch(lock, false) }
+    }
+
+    @Test
+    fun `tapping the dial of a lock without status sends no command`() = runTest(testDispatcher) {
+        val controller = controllerAnswering(LockStatusResult.DeviceOffline)
+        val viewModel = LockViewModel(controller)
+        viewModel.onScreenOpened(lock)
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onToggle()
+        testScheduler.advanceUntilIdle()
+
+        verifySuspend(not) { controller.switch(any(), any()) }
+    }
+
+    @Test
+    fun `brings battery signal and remote opening when the screen opens`() =
+        runTest(testDispatcher) {
+            val controller = controllerAnswering(
+                result = LockStatusResult.Known(isOpen = false),
+                details = LockDetails(
+                    batteryPercentage = 98,
+                    signalStrength = 4,
+                    remoteOpeningEnabled = true,
+                ),
+            )
+            val viewModel = LockViewModel(controller)
+
+            viewModel.onScreenOpened(lock)
+            testScheduler.advanceUntilIdle()
+
+            val details = viewModel.uiState.value.details
+            assertEquals(98, details.batteryPercentage)
+            assertEquals(4, details.signalStrength)
+            assertEquals(true, details.remoteOpeningEnabled)
+            verifySuspend { controller.detailsOf(lock) }
+        }
+
     private fun watching(result: LockStatusResult): LockViewModel {
         val viewModel = LockViewModel(controllerAnswering(result))
         viewModel.onScreenOpened(lock)
@@ -423,8 +629,12 @@ class LockViewModelTest {
     private fun controllerAnswering(
         result: LockStatusResult,
         volume: LockVolumeResult = LockVolumeResult.Known(LockVolumeLevel.Medium),
+        history: LockHistoryResult = LockHistoryResult.Loaded(emptyList()),
+        details: LockDetails = LockDetails(),
     ) = mock<LockController> {
         everySuspend { statusOf(any()) } returns result
         everySuspend { volumeOf(any()) } returns volume
+        everySuspend { historyOf(any(), any()) } returns history
+        everySuspend { detailsOf(any()) } returns details
     }
 }

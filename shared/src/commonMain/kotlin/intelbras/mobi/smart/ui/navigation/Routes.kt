@@ -12,6 +12,9 @@ data class TokenEntryRoute(val sessionExpired: Boolean = false)
 data object DeviceListRoute
 
 @Serializable
+data object ActivityRoute
+
+@Serializable
 data object AccountRoute
 
 @Serializable
@@ -28,4 +31,11 @@ data class LockRoute(
     val productId: String,
     val name: String,
     val model: String,
+)
+
+@Serializable
+data class LockHistoryRoute(
+    val address: String,
+    val productId: String,
+    val name: String,
 )
