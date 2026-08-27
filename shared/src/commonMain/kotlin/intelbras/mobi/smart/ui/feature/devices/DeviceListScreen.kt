@@ -56,6 +56,7 @@ internal fun DeviceListScreen(
     onFilterSelected: (DeviceFilter) -> Unit,
     onDeviceClick: (DeviceUiModel) -> Unit,
     onRetry: () -> Unit,
+    onRenewSession: () -> Unit,
     onLoadMore: () -> Unit,
     onAccountClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -85,7 +86,10 @@ internal fun DeviceListScreen(
                     title = stringResource(uiState.failure.titleResource()),
                     body = stringResource(uiState.failure.bodyResource()),
                     actionLabel = stringResource(uiState.failure.actionResource()),
-                    onAction = onRetry,
+                    onAction = when (uiState.failure) {
+                        DeviceListFailure.ExpiredSession -> onRenewSession
+                        else -> onRetry
+                    },
                     mark = { MiboErrorMark() },
                 )
 
@@ -264,6 +268,7 @@ private fun DeviceListScreenLoadingPreview() {
             onFilterSelected = {},
             onDeviceClick = {},
             onRetry = {},
+            onRenewSession = {},
             onLoadMore = {},
             onAccountClick = {},
         )
@@ -279,6 +284,7 @@ private fun DeviceListScreenLoadedPreview() {
             onFilterSelected = {},
             onDeviceClick = {},
             onRetry = {},
+            onRenewSession = {},
             onLoadMore = {},
             onAccountClick = {},
         )
@@ -294,6 +300,7 @@ private fun DeviceListScreenEmptyPreview() {
             onFilterSelected = {},
             onDeviceClick = {},
             onRetry = {},
+            onRenewSession = {},
             onLoadMore = {},
             onAccountClick = {},
         )
@@ -309,6 +316,7 @@ private fun DeviceListScreenFailurePreview() {
             onFilterSelected = {},
             onDeviceClick = {},
             onRetry = {},
+            onRenewSession = {},
             onLoadMore = {},
             onAccountClick = {},
         )

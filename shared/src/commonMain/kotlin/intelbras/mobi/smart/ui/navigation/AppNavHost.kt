@@ -98,6 +98,7 @@ internal fun AppNavHost(navController: NavHostController = rememberNavController
                         device.destination()?.let { destination -> navController.navigate(destination) }
                     },
                     onAccountClick = { navController.openTab(AccountRoute) },
+                    onRenewSession = { navController.openTokenEntry(sessionExpired = true) },
                 )
             }
 
@@ -105,11 +106,7 @@ internal fun AppNavHost(navController: NavHostController = rememberNavController
 
             composable<AccountRoute> {
                 AccountDestination(
-                    onSignedOut = {
-                        navController.navigate(TokenEntryRoute()) {
-                            popUpTo(DeviceListRoute) { inclusive = true }
-                        }
-                    },
+                    onSignedOut = { navController.openTokenEntry(sessionExpired = false) },
                 )
             }
 
@@ -185,6 +182,12 @@ private fun NavHostController.openTab(route: Any) {
         popUpTo(DeviceListRoute) { saveState = true }
         launchSingleTop = true
         restoreState = true
+    }
+}
+
+private fun NavHostController.openTokenEntry(sessionExpired: Boolean) {
+    navigate(TokenEntryRoute(sessionExpired)) {
+        popUpTo(DeviceListRoute) { inclusive = true }
     }
 }
 
