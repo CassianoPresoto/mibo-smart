@@ -5,6 +5,7 @@ import dev.mokkery.answering.sequentially
 import dev.mokkery.everySuspend
 import dev.mokkery.matcher.any
 import dev.mokkery.mock
+import dev.mokkery.verify.VerifyMode
 import dev.mokkery.verifySuspend
 import intelbras.mobi.smart.business.DeviceCatalog
 import intelbras.mobi.smart.business.usecase.DeviceListResult
@@ -170,6 +171,138 @@ class DeviceListViewModelTest {
         testScheduler.advanceUntilIdle()
 
         assertEquals(1, viewModel.uiState.value.devices.size)
+    }
+
+    @Test
+    fun `refreshing keeps the current list on screen while the platform answers`() =
+        runTest(testDispatcher) {
+            val catalog = catalogReturning(DeviceListResult.Success(listOf(device())))
+            val viewModel = DeviceListViewModel(catalog)
+            testScheduler.advanceUntilIdle()
+
+            viewModel.onRefresh()
+
+            val refreshing = viewModel.uiState.value
+            assertTrue(refreshing.isRefreshing)
+            assertFalse(refreshing.isLoading)
+            assertEquals(1, refreshing.devices.size)
+
+            testScheduler.advanceUntilIdle()
+            assertFalse(viewModel.uiState.value.isRefreshing)
+        }
+
+    @Test
+    fun `refreshing brings whatever changed on the platform`() = runTest(testDispatcher) {
+        val catalog = mock<DeviceCatalog> {
+            everySuspend { listDevices(any(), any(), any()) } sequentially {
+                returns(DeviceListResult.Success(listOf(device(serialNumber = "SERIAL-1"))))
+                returns(
+                    DeviceListResult.Success(
+                        listOf(
+                            device(serialNumber = "SERIAL-1"),
+                            device(serialNumber = "SERIAL-2", name = "Fechadura da porta"),
+                        ),
+                    ),
+                )
+            }
+        }
+        val viewModel = DeviceListViewModel(catalog)
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onRefresh()
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(listOf("SERIAL-1", "SERIAL-2"), viewModel.uiState.value.devices.map { it.id })
+    }
+
+    @Test
+    fun `a refresh that fails keeps the list instead of blanking the screen`() =
+        runTest(testDispatcher) {
+            val catalog = mock<DeviceCatalog> {
+                everySuspend { listDevices(any(), any(), any()) } sequentially {
+                    returns(DeviceListResult.Success(listOf(device())))
+                    returns(DeviceListResult.NetworkUnavailable)
+                }
+            }
+            val viewModel = DeviceListViewModel(catalog)
+            testScheduler.advanceUntilIdle()
+
+            viewModel.onRefresh()
+            testScheduler.advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertFalse(state.isRefreshing)
+            assertNull(state.failure)
+            assertEquals(1, state.devices.size)
+        }
+
+    @Test
+    fun `refreshing starts the list over from the first page`() = runTest(testDispatcher) {
+        val firstPage = List(DeviceListQuery.DEFAULT_PAGE_SIZE) { index ->
+            device(serialNumber = "SERIAL-$index")
+        }
+        val catalog = mock<DeviceCatalog> {
+            everySuspend { listDevices(any(), any(), any()) } sequentially {
+                returns(DeviceListResult.Success(firstPage))
+                returns(DeviceListResult.Success(listOf(device(serialNumber = "SERIAL-NEXT"))))
+                returns(DeviceListResult.Success(listOf(device(serialNumber = "SERIAL-ONLY"))))
+            }
+        }
+        val viewModel = DeviceListViewModel(catalog)
+        testScheduler.advanceUntilIdle()
+        viewModel.onLoadMore()
+        testScheduler.advanceUntilIdle()
+        assertEquals(DeviceListQuery.DEFAULT_PAGE_SIZE + 1, viewModel.uiState.value.devices.size)
+
+        viewModel.onRefresh()
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(listOf("SERIAL-ONLY"), viewModel.uiState.value.devices.map { it.id })
+        verifySuspend(VerifyMode.exactly(2)) {
+            catalog.listDevices(
+                DeviceOriginFilter.All,
+                DeviceListQuery.FIRST_PAGE,
+                DeviceListQuery.DEFAULT_PAGE_SIZE,
+            )
+        }
+    }
+
+    @Test
+    fun `does not ask for the next page while a refresh is in flight`() = runTest(testDispatcher) {
+        val firstPage = List(DeviceListQuery.DEFAULT_PAGE_SIZE) { index ->
+            device(serialNumber = "SERIAL-$index")
+        }
+        val catalog = catalogReturning(DeviceListResult.Success(firstPage))
+        val viewModel = DeviceListViewModel(catalog)
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onRefresh()
+        viewModel.onLoadMore()
+
+        assertFalse(viewModel.uiState.value.isLoadingMore)
+        testScheduler.advanceUntilIdle()
+
+        verifySuspend(VerifyMode.exactly(2)) {
+            catalog.listDevices(
+                DeviceOriginFilter.All,
+                DeviceListQuery.FIRST_PAGE,
+                DeviceListQuery.DEFAULT_PAGE_SIZE,
+            )
+        }
+    }
+
+    @Test
+    fun `changing the filter mid refresh puts the indicator away`() = runTest(testDispatcher) {
+        val catalog = catalogReturning(DeviceListResult.Success(listOf(device())))
+        val viewModel = DeviceListViewModel(catalog)
+        testScheduler.advanceUntilIdle()
+
+        viewModel.onRefresh()
+        viewModel.onFilterSelected(DeviceFilter.Linked)
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isRefreshing)
+        assertTrue(state.isLoading)
     }
 
     private fun catalogReturning(result: DeviceListResult) = mock<DeviceCatalog> {
