@@ -20,6 +20,7 @@ internal fun DeviceListRoute(
         onDeviceClick = onDeviceClick,
         onRetry = viewModel::onRetry,
         onRenewSession = onRenewSession,
+        onRefresh = viewModel::onRefresh,
         onLoadMore = viewModel::onLoadMore,
         onAccountClick = onAccountClick,
     )

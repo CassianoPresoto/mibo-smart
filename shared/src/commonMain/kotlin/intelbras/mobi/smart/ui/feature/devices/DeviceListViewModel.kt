@@ -39,19 +39,32 @@ class DeviceListViewModel(
 
     fun onRetry() = loadPage(page = DeviceListQuery.FIRST_PAGE, replacingDevices = true)
 
+    fun onRefresh() {
+        val state = mutableUiState.value
+        if (state.isLoading || state.isRefreshing) return
+        loadPage(page = DeviceListQuery.FIRST_PAGE, replacingDevices = true, refreshing = true)
+    }
+
     fun onLoadMore() {
         val state = mutableUiState.value
-        if (!state.hasMore || state.isLoading || state.isLoadingMore) return
+        if (!state.hasMore || state.isLoading || state.isRefreshing || state.isLoadingMore) return
         loadPage(page = currentPage + 1, replacingDevices = false)
     }
 
-    private fun loadPage(page: Int, replacingDevices: Boolean) {
+    private fun loadPage(page: Int, replacingDevices: Boolean, refreshing: Boolean = false) {
         loadingJob?.cancel()
         val state = mutableUiState.value
-        mutableUiState.value = if (replacingDevices) {
-            state.copy(isLoading = true, isLoadingMore = false, failure = null)
-        } else {
-            state.copy(isLoadingMore = true)
+        mutableUiState.value = when {
+            refreshing -> state.copy(isRefreshing = true, isLoadingMore = false)
+            replacingDevices ->
+                state.copy(
+                    isLoading = true,
+                    isRefreshing = false,
+                    isLoadingMore = false,
+                    failure = null,
+                )
+
+            else -> state.copy(isLoadingMore = true)
         }
         val filter = mutableUiState.value.filter
         loadingJob = viewModelScope.launch {
@@ -61,19 +74,21 @@ class DeviceListViewModel(
                 pageSize = PAGE_SIZE,
             )
             currentPage = page
-            mutableUiState.value = mutableUiState.value.applying(result, replacingDevices)
+            mutableUiState.value = mutableUiState.value.applying(result, replacingDevices, refreshing)
         }
     }
 
     private fun DeviceListUiState.applying(
         result: DeviceListResult,
         replacingDevices: Boolean,
+        refreshing: Boolean,
     ): DeviceListUiState = when (result) {
         is DeviceListResult.Success -> {
             val mapped = result.devices.toUiModels()
             copy(
                 devices = if (replacingDevices) mapped else devices + mapped,
                 isLoading = false,
+                isRefreshing = false,
                 isLoadingMore = false,
                 hasMore = mapped.size >= PAGE_SIZE,
                 failure = null,
@@ -83,20 +98,35 @@ class DeviceListViewModel(
         DeviceListResult.Empty -> copy(
             devices = if (replacingDevices) emptyList() else devices,
             isLoading = false,
+            isRefreshing = false,
             isLoadingMore = false,
             hasMore = false,
             failure = null,
         )
 
-        DeviceListResult.InvalidToken -> failing(DeviceListFailure.ExpiredSession, replacingDevices)
-        DeviceListResult.NetworkUnavailable -> failing(DeviceListFailure.Network, replacingDevices)
-        is DeviceListResult.Error -> failing(DeviceListFailure.Unexpected, replacingDevices)
+        DeviceListResult.InvalidToken ->
+            failing(DeviceListFailure.ExpiredSession, replacingDevices, refreshing)
+
+        DeviceListResult.NetworkUnavailable ->
+            failing(DeviceListFailure.Network, replacingDevices, refreshing)
+
+        is DeviceListResult.Error ->
+            failing(DeviceListFailure.Unexpected, replacingDevices, refreshing)
     }
 
-    private fun DeviceListUiState.failing(failure: DeviceListFailure, replacingDevices: Boolean) = copy(
+    /**
+     * A refresh keeps whatever is already on screen: swapping the list for a full-screen error
+     * would punish the user for pulling. Only a load that had nothing to show reports the failure.
+     */
+    private fun DeviceListUiState.failing(
+        failure: DeviceListFailure,
+        replacingDevices: Boolean,
+        refreshing: Boolean,
+    ) = copy(
         isLoading = false,
+        isRefreshing = false,
         isLoadingMore = false,
-        failure = if (replacingDevices) failure else this.failure,
+        failure = if (replacingDevices && !refreshing) failure else this.failure,
     )
 
     private fun DeviceFilter.toOriginFilter(): DeviceOriginFilter = when (this) {

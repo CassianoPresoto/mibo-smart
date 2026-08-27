@@ -17,7 +17,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
@@ -57,6 +61,7 @@ internal fun DeviceListScreen(
     onDeviceClick: (DeviceUiModel) -> Unit,
     onRetry: () -> Unit,
     onRenewSession: () -> Unit,
+    onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
     onAccountClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -102,8 +107,10 @@ internal fun DeviceListScreen(
 
                 else -> DeviceList(
                     devices = uiState.devices,
+                    isRefreshing = uiState.isRefreshing,
                     isLoadingMore = uiState.isLoadingMore,
                     onDeviceClick = onDeviceClick,
+                    onRefresh = onRefresh,
                     onLoadMore = onLoadMore,
                 )
             }
@@ -171,14 +178,18 @@ private fun DeviceFilterRow(
 
 private const val LOAD_MORE_THRESHOLD = 4
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DeviceList(
     devices: List<DeviceUiModel>,
+    isRefreshing: Boolean,
     isLoadingMore: Boolean,
     onDeviceClick: (DeviceUiModel) -> Unit,
+    onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
 ) {
     val listState = rememberLazyListState()
+    val refreshState = rememberPullToRefreshState()
 
     LaunchedEffect(listState) {
         snapshotFlow { listState.layoutInfo }.collect { layoutInfo ->
@@ -189,23 +200,39 @@ private fun DeviceList(
         }
     }
 
-    LazyColumn(
-        state = listState,
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        state = refreshState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = MiboSmartSize.listPadding,
-            end = MiboSmartSize.listPadding,
-            bottom = 12.dp,
-        ),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        indicator = {
+            PullToRefreshDefaults.Indicator(
+                state = refreshState,
+                isRefreshing = isRefreshing,
+                modifier = Modifier.align(Alignment.TopCenter),
+                containerColor = MiboTheme.colors.surface,
+                color = MiboTheme.colors.primary,
+            )
+        },
     ) {
-        items(items = devices, key = { it.id }) { device ->
-            DeviceCard(device = device, onClick = onDeviceClick)
-        }
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = MiboSmartSize.listPadding,
+                end = MiboSmartSize.listPadding,
+                bottom = 12.dp,
+            ),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(items = devices, key = { it.id }) { device ->
+                DeviceCard(device = device, onClick = onDeviceClick)
+            }
 
-        if (isLoadingMore) {
-            item(key = "loading-more") {
-                DeviceListLoadingMore()
+            if (isLoadingMore) {
+                item(key = "loading-more") {
+                    DeviceListLoadingMore()
+                }
             }
         }
     }
@@ -269,6 +296,7 @@ private fun DeviceListScreenLoadingPreview() {
             onDeviceClick = {},
             onRetry = {},
             onRenewSession = {},
+            onRefresh = {},
             onLoadMore = {},
             onAccountClick = {},
         )
@@ -285,6 +313,24 @@ private fun DeviceListScreenLoadedPreview() {
             onDeviceClick = {},
             onRetry = {},
             onRenewSession = {},
+            onRefresh = {},
+            onLoadMore = {},
+            onAccountClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DeviceListScreenRefreshingPreview() {
+    MiboTheme {
+        DeviceListScreen(
+            uiState = DeviceListUiState(devices = previewDevices, isRefreshing = true),
+            onFilterSelected = {},
+            onDeviceClick = {},
+            onRetry = {},
+            onRenewSession = {},
+            onRefresh = {},
             onLoadMore = {},
             onAccountClick = {},
         )
@@ -301,6 +347,7 @@ private fun DeviceListScreenEmptyPreview() {
             onDeviceClick = {},
             onRetry = {},
             onRenewSession = {},
+            onRefresh = {},
             onLoadMore = {},
             onAccountClick = {},
         )
@@ -317,6 +364,7 @@ private fun DeviceListScreenFailurePreview() {
             onDeviceClick = {},
             onRetry = {},
             onRenewSession = {},
+            onRefresh = {},
             onLoadMore = {},
             onAccountClick = {},
         )

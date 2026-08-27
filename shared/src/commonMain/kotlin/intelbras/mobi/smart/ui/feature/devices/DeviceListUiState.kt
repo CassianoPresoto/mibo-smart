@@ -1,3 +1,4 @@
+
 package intelbras.mobi.smart.ui.feature.devices
 
 import androidx.compose.runtime.Immutable
@@ -36,6 +37,7 @@ data class DeviceListUiState(
     val devices: List<DeviceUiModel> = emptyList(),
     val filter: DeviceFilter = DeviceFilter.All,
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
     val hasMore: Boolean = false,
     val failure: DeviceListFailure? = null,
