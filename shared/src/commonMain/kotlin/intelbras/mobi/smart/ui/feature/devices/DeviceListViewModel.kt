@@ -2,9 +2,9 @@ package intelbras.mobi.smart.ui.feature.devices
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import intelbras.mobi.smart.business.DeviceCatalog
-import intelbras.mobi.smart.business.usecase.CatalogDevice
-import intelbras.mobi.smart.business.usecase.DeviceListResult
+import intelbras.mobi.smart.business.device.DeviceCatalog
+import intelbras.mobi.smart.business.device.usecase.CatalogDevice
+import intelbras.mobi.smart.business.device.usecase.DeviceListResult
 import intelbras.mobi.smart.domain.device.model.DeviceListQuery
 import intelbras.mobi.smart.domain.device.model.DeviceOriginFilter
 import kotlinx.coroutines.Job

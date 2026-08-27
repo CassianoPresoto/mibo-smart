@@ -7,10 +7,10 @@ import dev.mokkery.matcher.any
 import dev.mokkery.mock
 import dev.mokkery.verify.VerifyMode
 import dev.mokkery.verifySuspend
-import intelbras.mobi.smart.business.LockController
-import intelbras.mobi.smart.business.usecase.LockHistoryResult
-import intelbras.mobi.smart.business.usecase.LockOpening
-import intelbras.mobi.smart.business.usecase.LockOpeningWay
+import intelbras.mobi.smart.business.lock.LockController
+import intelbras.mobi.smart.business.lock.usecase.LockHistoryResult
+import intelbras.mobi.smart.business.lock.usecase.LockOpening
+import intelbras.mobi.smart.business.lock.usecase.LockOpeningWay
 import intelbras.mobi.smart.domain.device.model.DeviceReference
 import intelbras.mobi.smart.ui.feature.lock.LockFailure
 import kotlin.test.AfterTest

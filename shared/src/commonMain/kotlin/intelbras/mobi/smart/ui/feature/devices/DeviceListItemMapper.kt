@@ -1,6 +1,6 @@
 package intelbras.mobi.smart.ui.feature.devices
 
-import intelbras.mobi.smart.business.usecase.CatalogDevice
+import intelbras.mobi.smart.business.device.usecase.CatalogDevice
 import intelbras.mobi.smart.domain.device.model.DeviceKind as DomainDeviceKind
 import intelbras.mobi.smart.domain.device.model.DeviceOrigin as DomainDeviceOrigin
 
