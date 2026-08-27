@@ -2,6 +2,8 @@ package intelbras.mobi.smart.business.di
 
 import intelbras.mobi.smart.business.activity.ActivityFeed
 import intelbras.mobi.smart.business.activity.ActivityFeedImpl
+import intelbras.mobi.smart.business.capture.CameraCaptures
+import intelbras.mobi.smart.business.capture.CameraCapturesImpl
 import intelbras.mobi.smart.business.device.DeviceCatalog
 import intelbras.mobi.smart.business.device.DeviceCatalogImpl
 import intelbras.mobi.smart.business.device.DeviceConnector
@@ -20,11 +22,17 @@ import intelbras.mobi.smart.business.video.VideoPlayback
 import intelbras.mobi.smart.business.video.VideoPlaybackImpl
 import intelbras.mobi.smart.business.session.StoredAccessTokenProvider
 import intelbras.mobi.smart.business.account.usecase.AccountInspection
+import intelbras.mobi.smart.business.capture.usecase.CaptureFileNaming
+import intelbras.mobi.smart.business.capture.usecase.CaptureLibraryReading
+import intelbras.mobi.smart.business.capture.usecase.CaptureMediaReading
+import intelbras.mobi.smart.business.capture.usecase.CaptureRemoval
 import intelbras.mobi.smart.business.device.usecase.ConnectionTermination
 import intelbras.mobi.smart.business.device.usecase.DeviceConnecting
 import intelbras.mobi.smart.business.device.usecase.DeviceKindResolution
 import intelbras.mobi.smart.business.device.usecase.DeviceListing
 import intelbras.mobi.smart.business.activity.usecase.HomeActivityReading
+import intelbras.mobi.smart.business.capture.usecase.LiveClipRecording
+import intelbras.mobi.smart.business.capture.usecase.LiveSnapshotTaking
 import intelbras.mobi.smart.business.video.usecase.LiveVideoPlayback
 import intelbras.mobi.smart.business.lock.usecase.LockConfirmation
 import intelbras.mobi.smart.business.lock.usecase.LockConfirmationPolicy
@@ -59,16 +67,22 @@ fun businessModule(
     )
 
     single<Clock> { Clock.System }
+    single { CaptureFileNaming() }
     single { LockConfirmationPolicy() }
     single { PlaybackRetryPolicy() }
     single<AccessTokenProvider> { StoredAccessTokenProvider(get(), get()) }
 
     factory { AccountInspection(get(), get()) }
+    factory { CaptureLibraryReading(get()) }
+    factory { CaptureMediaReading(get()) }
+    factory { CaptureRemoval(get(), get()) }
     factory { ConnectionTermination(get()) }
     factory { DeviceConnecting(get(), get()) }
     factory { DeviceKindResolution(get(), get()) }
     factory { DeviceListing(get(), get()) }
     factory { HomeActivityReading(get(), get()) }
+    factory { LiveClipRecording(get(), get(), get(), get()) }
+    factory { LiveSnapshotTaking(get(), get(), get(), get()) }
     factory { LiveVideoPlayback(get(), get()) }
     factory { LockConfirmation(get()) }
     factory { LockDetailsReading(get(), get(), get()) }
@@ -84,6 +98,7 @@ fun businessModule(
     factory { TokenAuthentication(get(), get(), get()) }
 
     single<ActivityFeed> { ActivityFeedImpl(get()) }
+    single<CameraCaptures> { CameraCapturesImpl(get(), get(), get(), get(), get()) }
     single<DeviceCatalog> { DeviceCatalogImpl(get()) }
     single<DeviceConnector> { DeviceConnectorImpl(get(), get()) }
     single<LockController> { LockControllerImpl(get(), get(), get(), get(), get(), get()) }

@@ -8,6 +8,12 @@ interface NativeVideoPlayback {
     fun start(url: String, listener: NativeVideoPlaybackListener)
 
     fun stop()
+
+    fun takeSnapshot(path: String)
+
+    fun startRecording(directoryPath: String)
+
+    fun stopRecording()
 }
 
 interface NativeVideoPlaybackListener {
@@ -18,6 +24,12 @@ interface NativeVideoPlaybackListener {
     fun onEnded()
 
     fun onFailed()
+
+    fun onSnapshotTaken(path: String?)
+
+    fun onRecordingStarted()
+
+    fun onRecordingStopped(path: String?)
 }
 
 object IosVideoPlayback {

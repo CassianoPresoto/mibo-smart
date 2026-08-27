@@ -1,0 +1,34 @@
+CREATE TABLE cameraCaptureEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    deviceSerialNumber TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    fileName TEXT NOT NULL,
+    previewFileName TEXT NOT NULL,
+    capturedAtEpochMilliseconds INTEGER NOT NULL,
+    durationMilliseconds INTEGER,
+    sizeBytes INTEGER NOT NULL
+);
+
+CREATE INDEX cameraCaptureEntity_device ON cameraCaptureEntity(deviceSerialNumber);
+
+selectByDevice:
+SELECT *
+FROM cameraCaptureEntity
+WHERE deviceSerialNumber = :deviceSerialNumber
+ORDER BY capturedAtEpochMilliseconds DESC;
+
+replaceCapture:
+INSERT OR REPLACE INTO cameraCaptureEntity(
+    id,
+    deviceSerialNumber,
+    kind,
+    fileName,
+    previewFileName,
+    capturedAtEpochMilliseconds,
+    durationMilliseconds,
+    sizeBytes
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteCapture:
+DELETE FROM cameraCaptureEntity WHERE id = :id;

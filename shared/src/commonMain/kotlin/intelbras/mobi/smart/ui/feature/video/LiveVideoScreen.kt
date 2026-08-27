@@ -2,6 +2,7 @@ package intelbras.mobi.smart.ui.feature.video
 
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -32,6 +34,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -43,8 +46,17 @@ import intelbras.mobi.smart.domain.playback.model.PlaybackSource
 import intelbras.mobi.smart.domain.playback.model.VideoPlayerEvent
 import intelbras.mobi.smart.ui.component.MiboBackButton
 import intelbras.mobi.smart.ui.component.MiboCompactButton
+import intelbras.mobi.smart.ui.feature.video.capture.CameraCaptureUiModel
+import intelbras.mobi.smart.ui.feature.video.capture.CameraCaptureUiState
+import intelbras.mobi.smart.ui.feature.video.capture.CaptureNotice
+import intelbras.mobi.smart.ui.feature.video.capture.CaptureRecordingUiState
+import intelbras.mobi.smart.ui.feature.video.capture.messageResource
+import intelbras.mobi.smart.ui.feature.video.component.CaptureControls
+import intelbras.mobi.smart.ui.feature.video.component.CaptureLibraryCard
+import intelbras.mobi.smart.ui.feature.video.component.RecordingBadge
 import intelbras.mobi.smart.ui.theme.MiboSmartShapes
 import intelbras.mobi.smart.ui.theme.MiboSmartSize
+import intelbras.mobi.smart.ui.theme.MiboSmartSpacing
 import intelbras.mobi.smart.ui.theme.MiboTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -64,16 +76,27 @@ import org.jetbrains.compose.resources.stringResource
 
 private const val VIDEO_RATIO = 16f / 9f
 private const val CLOCK_TICK_MS = 1_000L
+private const val NOTICE_DURATION_MS = 2_600L
+private const val FLASH_ALPHA = 0.75f
+private const val NO_FLASH = 0f
+private const val FLASH_DURATION_MS = 160
 
 @Composable
 internal fun LiveVideoScreen(
     uiState: LiveVideoUiState,
     details: LiveVideoDetails,
+    captures: CameraCaptureUiState,
     player: VideoPlayer,
     deviceName: String,
     deviceModel: String,
     deviceSerialNumber: String,
+    loadPreview: suspend (String) -> ByteArray?,
     onRetry: () -> Unit,
+    onTakePhoto: () -> Unit,
+    onToggleRecording: () -> Unit,
+    onNoticeShown: () -> Unit,
+    onCaptureClick: (CameraCaptureUiModel) -> Unit,
+    onSeeAllCaptures: () -> Unit,
     onLeave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -100,8 +123,12 @@ internal fun LiveVideoScreen(
         ) {
             VideoBox(
                 uiState = uiState,
+                captures = captures,
                 player = player,
                 onRetry = onRetry,
+                onTakePhoto = onTakePhoto,
+                onToggleRecording = onToggleRecording,
+                onNoticeShown = onNoticeShown,
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(VIDEO_RATIO),
@@ -112,6 +139,13 @@ internal fun LiveVideoScreen(
                 details = details,
                 deviceModel = deviceModel,
                 deviceSerialNumber = deviceSerialNumber,
+            )
+            Spacer(Modifier.height(MiboSmartSpacing.md))
+            CaptureLibraryCard(
+                captures = captures.captures,
+                loadPreview = loadPreview,
+                onCaptureClick = onCaptureClick,
+                onSeeAll = onSeeAllCaptures,
             )
         }
     }
@@ -164,8 +198,12 @@ private fun LiveVideoHeader(
 @Composable
 private fun VideoBox(
     uiState: LiveVideoUiState,
+    captures: CameraCaptureUiState,
     player: VideoPlayer,
     onRetry: () -> Unit,
+    onTakePhoto: () -> Unit,
+    onToggleRecording: () -> Unit,
+    onNoticeShown: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = MiboTheme.colors
@@ -178,8 +216,25 @@ private fun VideoBox(
         when {
             uiState == LiveVideoUiState.Playing -> {
                 VideoPlayerSurface(player = player, modifier = Modifier.fillMaxSize())
-                LiveBadge(modifier = Modifier.align(Alignment.TopStart).padding(12.dp))
+                Row(
+                    modifier = Modifier.align(Alignment.TopStart).padding(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    LiveBadge()
+                    val recording = captures.recording
+                    if (recording is CaptureRecordingUiState.Recording) {
+                        RecordingBadge(elapsedSeconds = recording.elapsedSeconds)
+                    }
+                }
                 VideoClock(modifier = Modifier.align(Alignment.TopEnd).padding(12.dp))
+                CaptureControls(
+                    state = captures,
+                    onTakePhoto = onTakePhoto,
+                    onToggleRecording = onToggleRecording,
+                    modifier = Modifier.align(Alignment.BottomStart).padding(12.dp),
+                )
+                CaptureFlash(active = captures.isTakingPhoto)
             }
 
             uiState.isWaitingForPicture() -> {
@@ -190,7 +245,57 @@ private fun VideoBox(
                 VideoRetryOverlay(uiState = uiState, onRetry = onRetry)
             }
         }
+
+        captures.notice?.let { notice ->
+            CaptureNoticeBanner(
+                notice = notice,
+                onShown = onNoticeShown,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp),
+            )
+        }
     }
+}
+
+@Composable
+private fun CaptureFlash(active: Boolean) {
+    val alpha by animateFloatAsState(
+        targetValue = if (active) FLASH_ALPHA else NO_FLASH,
+        animationSpec = tween(durationMillis = FLASH_DURATION_MS),
+        label = "captureFlash",
+    )
+    if (alpha == NO_FLASH) return
+
+    Box(
+        Modifier
+            .fillMaxSize()
+            .alpha(alpha)
+            .background(MiboTheme.colors.onVideo),
+    )
+}
+
+@Composable
+private fun CaptureNoticeBanner(
+    notice: CaptureNotice,
+    onShown: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MiboTheme.colors
+
+    LaunchedEffect(notice) {
+        delay(NOTICE_DURATION_MS)
+        onShown()
+    }
+
+    Text(
+        text = stringResource(notice.messageResource()),
+        style = MiboTheme.typography.caption.copy(fontSize = 12.sp),
+        color = colors.onVideo,
+        textAlign = TextAlign.Center,
+        modifier = modifier
+            .clip(MiboSmartShapes.pill)
+            .background(colors.videoScrim)
+            .padding(horizontal = 14.dp, vertical = 7.dp),
+    )
 }
 
 @Composable
@@ -337,6 +442,21 @@ private fun LiveVideoScreenPlayingPreview() {
                 isSessionActive = true,
             ),
         ),
+        captures = CameraCaptureUiState(canTakePhoto = true, canRecord = true),
+    )
+}
+
+@Preview
+@Composable
+private fun LiveVideoScreenRecordingPreview() {
+    PreviewScreen(
+        uiState = LiveVideoUiState.Playing,
+        details = LiveVideoDetails(sessionId = "6ecd7198", quotaGb = 1.0),
+        captures = CameraCaptureUiState(
+            canTakePhoto = true,
+            canRecord = true,
+            recording = CaptureRecordingUiState.Recording(elapsedSeconds = 12),
+        ),
     )
 }
 
@@ -356,16 +476,27 @@ private fun LiveVideoScreenFailedPreview() {
 }
 
 @Composable
-private fun PreviewScreen(uiState: LiveVideoUiState, details: LiveVideoDetails) {
+private fun PreviewScreen(
+    uiState: LiveVideoUiState,
+    details: LiveVideoDetails,
+    captures: CameraCaptureUiState = CameraCaptureUiState(),
+) {
     MiboTheme {
         LiveVideoScreen(
             uiState = uiState,
             details = details,
+            captures = captures,
             player = PreviewVideoPlayer,
             deviceName = "Sala",
             deviceModel = "Mibo Cloud iM5 S",
             deviceSerialNumber = "4H0A2C1D9B",
+            loadPreview = { null },
             onRetry = {},
+            onTakePhoto = {},
+            onToggleRecording = {},
+            onNoticeShown = {},
+            onCaptureClick = {},
+            onSeeAllCaptures = {},
             onLeave = {},
         )
     }

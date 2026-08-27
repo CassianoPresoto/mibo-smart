@@ -46,6 +46,7 @@ import intelbras.mobi.smart.ui.feature.lock.LockRoute as LockDestination
 import intelbras.mobi.smart.ui.feature.lock.history.OpeningHistoryRoute as LockHistoryDestination
 import intelbras.mobi.smart.ui.feature.token.TokenEntryRoute as TokenEntryDestination
 import intelbras.mobi.smart.ui.feature.video.LiveVideoRoute as LiveVideoDestination
+import intelbras.mobi.smart.ui.feature.video.capture.CaptureLibraryRoute as CaptureLibraryDestination
 
 private const val SLIDE_BACK_FRACTION = 3
 
@@ -121,6 +122,20 @@ internal fun AppNavHost(navController: NavHostController = rememberNavController
                     device = route.reference(),
                     deviceName = route.name,
                     deviceModel = route.model,
+                    onOpenCapture = { captureId ->
+                        navController.navigate(route.captureLibrary(captureId))
+                    },
+                    onSeeAllCaptures = { navController.navigate(route.captureLibrary()) },
+                    onLeave = { navController.popBackStack() },
+                )
+            }
+
+            composable<CaptureLibraryRoute> { entry ->
+                val route = entry.toRoute<CaptureLibraryRoute>()
+                CaptureLibraryDestination(
+                    camera = route.reference(),
+                    cameraName = route.name,
+                    selectedCaptureId = route.captureId,
                     onLeave = { navController.popBackStack() },
                 )
             }
@@ -209,6 +224,12 @@ private fun DeviceUiModel.destination(): Any? = when (kind) {
 }
 
 private fun LiveVideoRoute.reference() =
+    DeviceReference(serialNumber = address, productId = productId)
+
+private fun LiveVideoRoute.captureLibrary(captureId: String? = null) =
+    CaptureLibraryRoute(address, productId, name, captureId)
+
+private fun CaptureLibraryRoute.reference() =
     DeviceReference(serialNumber = address, productId = productId)
 
 private fun LockRoute.reference() = DeviceReference(serialNumber = address, productId = productId)
