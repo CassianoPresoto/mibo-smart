@@ -2,7 +2,7 @@ package intelbras.mobi.smart.ui.feature.video.capture
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import intelbras.mobi.smart.business.CameraCaptures
+import intelbras.mobi.smart.business.capture.CameraCaptures
 import intelbras.mobi.smart.domain.capture.model.CameraCapture
 import intelbras.mobi.smart.domain.device.model.DeviceReference
 import kotlinx.coroutines.Job

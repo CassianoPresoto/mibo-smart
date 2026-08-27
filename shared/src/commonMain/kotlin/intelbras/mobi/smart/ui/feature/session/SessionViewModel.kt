@@ -2,8 +2,8 @@ package intelbras.mobi.smart.ui.feature.session
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import intelbras.mobi.smart.business.SmartHomeSession
-import intelbras.mobi.smart.business.usecase.SessionStatus
+import intelbras.mobi.smart.business.session.SmartHomeSession
+import intelbras.mobi.smart.business.session.usecase.SessionStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

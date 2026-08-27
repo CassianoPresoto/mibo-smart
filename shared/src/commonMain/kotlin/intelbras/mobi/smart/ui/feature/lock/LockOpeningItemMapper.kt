@@ -1,7 +1,7 @@
 package intelbras.mobi.smart.ui.feature.lock
 
-import intelbras.mobi.smart.business.usecase.LockOpening
-import intelbras.mobi.smart.business.usecase.LockOpeningWay
+import intelbras.mobi.smart.business.lock.usecase.LockOpening
+import intelbras.mobi.smart.business.lock.usecase.LockOpeningWay
 
 internal fun List<LockOpening>.toUiModels(): List<LockOpeningUiModel> =
     mapIndexed { position, opening -> opening.toUiModel(position) }

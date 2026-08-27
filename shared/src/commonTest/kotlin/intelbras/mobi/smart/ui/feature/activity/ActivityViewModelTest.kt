@@ -5,11 +5,11 @@ import dev.mokkery.everySuspend
 import dev.mokkery.matcher.any
 import dev.mokkery.mock
 import dev.mokkery.verifySuspend
-import intelbras.mobi.smart.business.ActivityFeed
-import intelbras.mobi.smart.business.usecase.HomeActivityEntry
-import intelbras.mobi.smart.business.usecase.HomeActivityResult
-import intelbras.mobi.smart.business.usecase.LockOpening
-import intelbras.mobi.smart.business.usecase.LockOpeningWay
+import intelbras.mobi.smart.business.activity.ActivityFeed
+import intelbras.mobi.smart.business.activity.usecase.HomeActivityEntry
+import intelbras.mobi.smart.business.activity.usecase.HomeActivityResult
+import intelbras.mobi.smart.business.lock.usecase.LockOpening
+import intelbras.mobi.smart.business.lock.usecase.LockOpeningWay
 import intelbras.mobi.smart.ui.feature.lock.LockFailure
 import intelbras.mobi.smart.ui.feature.lock.history.OpeningDayLabel
 import kotlin.test.AfterTest

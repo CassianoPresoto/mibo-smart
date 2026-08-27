@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import intelbras.mobi.smart.business.usecase.SessionStatus
+import intelbras.mobi.smart.business.session.usecase.SessionStatus
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable

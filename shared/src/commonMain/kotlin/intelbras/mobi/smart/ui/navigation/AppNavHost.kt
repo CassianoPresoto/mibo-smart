@@ -6,8 +6,11 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.History
@@ -47,8 +50,6 @@ import intelbras.mobi.smart.ui.feature.video.capture.CaptureLibraryRoute as Capt
 
 private const val SLIDE_BACK_FRACTION = 3
 
-private val NO_INSETS = WindowInsets(0, 0, 0, 0)
-
 @Composable
 internal fun AppNavHost(navController: NavHostController = rememberNavController()) {
     val currentEntry by navController.currentBackStackEntryAsState()
@@ -56,7 +57,7 @@ internal fun AppNavHost(navController: NavHostController = rememberNavController
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = MiboTheme.colors.background,
-        contentWindowInsets = NO_INSETS,
+        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
         bottomBar = {
             if (currentEntry.isTopLevel()) {
                 AppNavigationBar(
@@ -103,6 +104,7 @@ internal fun AppNavHost(navController: NavHostController = rememberNavController
                         device.destination()?.let { destination -> navController.navigate(destination) }
                     },
                     onAccountClick = { navController.openTab(AccountRoute) },
+                    onRenewSession = { navController.openTokenEntry(sessionExpired = true) },
                 )
             }
 
@@ -110,11 +112,7 @@ internal fun AppNavHost(navController: NavHostController = rememberNavController
 
             composable<AccountRoute> {
                 AccountDestination(
-                    onSignedOut = {
-                        navController.navigate(TokenEntryRoute()) {
-                            popUpTo(DeviceListRoute) { inclusive = true }
-                        }
-                    },
+                    onSignedOut = { navController.openTokenEntry(sessionExpired = false) },
                 )
             }
 
@@ -204,6 +202,12 @@ private fun NavHostController.openTab(route: Any) {
         popUpTo(DeviceListRoute) { saveState = true }
         launchSingleTop = true
         restoreState = true
+    }
+}
+
+private fun NavHostController.openTokenEntry(sessionExpired: Boolean) {
+    navigate(TokenEntryRoute(sessionExpired)) {
+        popUpTo(DeviceListRoute) { inclusive = true }
     }
 }
 

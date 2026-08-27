@@ -1,6 +1,6 @@
 package intelbras.mobi.smart.ui.feature.activity
 
-import intelbras.mobi.smart.business.usecase.HomeActivityEntry
+import intelbras.mobi.smart.business.activity.usecase.HomeActivityEntry
 import intelbras.mobi.smart.ui.feature.lock.UNKNOWN_TIME
 import intelbras.mobi.smart.ui.feature.lock.formattedTime
 import intelbras.mobi.smart.ui.feature.lock.history.dayLabelOf

@@ -9,6 +9,7 @@ import org.koin.compose.viewmodel.koinViewModel
 internal fun DeviceListRoute(
     onDeviceClick: (DeviceUiModel) -> Unit,
     onAccountClick: () -> Unit,
+    onRenewSession: () -> Unit,
     viewModel: DeviceListViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -18,6 +19,8 @@ internal fun DeviceListRoute(
         onFilterSelected = viewModel::onFilterSelected,
         onDeviceClick = onDeviceClick,
         onRetry = viewModel::onRetry,
+        onRenewSession = onRenewSession,
+        onRefresh = viewModel::onRefresh,
         onLoadMore = viewModel::onLoadMore,
         onAccountClick = onAccountClick,
     )

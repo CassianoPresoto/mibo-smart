@@ -1,7 +1,7 @@
 package intelbras.mobi.smart.ui.feature.lock.history
 
-import intelbras.mobi.smart.business.usecase.LockOpening
-import intelbras.mobi.smart.business.usecase.LockOpeningWay
+import intelbras.mobi.smart.business.lock.usecase.LockOpening
+import intelbras.mobi.smart.business.lock.usecase.LockOpeningWay
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.datetime.LocalDate
