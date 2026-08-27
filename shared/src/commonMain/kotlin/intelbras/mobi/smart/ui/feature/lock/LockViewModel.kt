@@ -2,13 +2,13 @@ package intelbras.mobi.smart.ui.feature.lock
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import intelbras.mobi.smart.business.LockController
-import intelbras.mobi.smart.business.usecase.LockDetails
-import intelbras.mobi.smart.business.usecase.LockHistoryResult
-import intelbras.mobi.smart.business.usecase.LockOperationResult
-import intelbras.mobi.smart.business.usecase.LockStatusResult
-import intelbras.mobi.smart.business.usecase.LockVolumeChangeResult
-import intelbras.mobi.smart.business.usecase.LockVolumeResult
+import intelbras.mobi.smart.business.lock.LockController
+import intelbras.mobi.smart.business.lock.usecase.LockDetails
+import intelbras.mobi.smart.business.lock.usecase.LockHistoryResult
+import intelbras.mobi.smart.business.lock.usecase.LockOperationResult
+import intelbras.mobi.smart.business.lock.usecase.LockStatusResult
+import intelbras.mobi.smart.business.lock.usecase.LockVolumeChangeResult
+import intelbras.mobi.smart.business.lock.usecase.LockVolumeResult
 import intelbras.mobi.smart.domain.device.model.DeviceReference
 import intelbras.mobi.smart.domain.lock.model.LockVolumeLevel
 import kotlinx.coroutines.Job

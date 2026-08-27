@@ -2,8 +2,8 @@ package intelbras.mobi.smart.ui.feature.lock.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import intelbras.mobi.smart.business.LockController
-import intelbras.mobi.smart.business.usecase.LockHistoryResult
+import intelbras.mobi.smart.business.lock.LockController
+import intelbras.mobi.smart.business.lock.usecase.LockHistoryResult
 import intelbras.mobi.smart.domain.device.model.DeviceReference
 import intelbras.mobi.smart.ui.feature.lock.LockFailure
 import kotlin.time.Clock

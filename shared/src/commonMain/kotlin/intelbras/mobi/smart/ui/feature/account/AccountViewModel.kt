@@ -2,10 +2,10 @@ package intelbras.mobi.smart.ui.feature.account
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import intelbras.mobi.smart.business.SmartHomeSession
-import intelbras.mobi.smart.business.ThemeSettings
-import intelbras.mobi.smart.business.UserAccount
-import intelbras.mobi.smart.business.usecase.AccountSummaryResult
+import intelbras.mobi.smart.business.session.SmartHomeSession
+import intelbras.mobi.smart.business.theme.ThemeSettings
+import intelbras.mobi.smart.business.account.UserAccount
+import intelbras.mobi.smart.business.account.usecase.AccountSummaryResult
 import intelbras.mobi.smart.domain.preferences.model.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

@@ -2,8 +2,8 @@ package intelbras.mobi.smart.ui.feature.activity
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import intelbras.mobi.smart.business.ActivityFeed
-import intelbras.mobi.smart.business.usecase.HomeActivityResult
+import intelbras.mobi.smart.business.activity.ActivityFeed
+import intelbras.mobi.smart.business.activity.usecase.HomeActivityResult
 import intelbras.mobi.smart.ui.feature.lock.LockFailure
 import kotlin.time.Clock
 import kotlinx.coroutines.Job

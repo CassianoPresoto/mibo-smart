@@ -2,8 +2,8 @@ package intelbras.mobi.smart.ui.feature.token
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import intelbras.mobi.smart.business.SmartHomeSession
-import intelbras.mobi.smart.business.usecase.AuthenticationResult
+import intelbras.mobi.smart.business.session.SmartHomeSession
+import intelbras.mobi.smart.business.token.usecase.AuthenticationResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

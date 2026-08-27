@@ -2,12 +2,12 @@ package intelbras.mobi.smart.ui.feature.video
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import intelbras.mobi.smart.business.StreamingMonitor
-import intelbras.mobi.smart.business.VideoPlayback
-import intelbras.mobi.smart.business.usecase.LiveVideoSession
-import intelbras.mobi.smart.business.usecase.StreamingUsageResult
-import intelbras.mobi.smart.business.usecase.VideoPlaybackFailure
-import intelbras.mobi.smart.business.usecase.VideoPlaybackState
+import intelbras.mobi.smart.business.streaming.StreamingMonitor
+import intelbras.mobi.smart.business.video.VideoPlayback
+import intelbras.mobi.smart.business.device.usecase.LiveVideoSession
+import intelbras.mobi.smart.business.streaming.usecase.StreamingUsageResult
+import intelbras.mobi.smart.business.video.usecase.VideoPlaybackFailure
+import intelbras.mobi.smart.business.video.usecase.VideoPlaybackState
 import intelbras.mobi.smart.domain.device.model.DeviceReference
 import intelbras.mobi.smart.domain.playback.VideoPlayer
 import kotlinx.coroutines.Job

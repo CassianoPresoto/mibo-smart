@@ -7,8 +7,8 @@ import dev.mokkery.matcher.any
 import dev.mokkery.mock
 import dev.mokkery.verify.VerifyMode
 import dev.mokkery.verifySuspend
-import intelbras.mobi.smart.business.DeviceCatalog
-import intelbras.mobi.smart.business.usecase.DeviceListResult
+import intelbras.mobi.smart.business.device.DeviceCatalog
+import intelbras.mobi.smart.business.device.usecase.DeviceListResult
 import intelbras.mobi.smart.domain.device.model.DeviceKind as DomainDeviceKind
 import intelbras.mobi.smart.domain.device.model.DeviceListQuery
 import intelbras.mobi.smart.domain.device.model.DeviceOriginFilter

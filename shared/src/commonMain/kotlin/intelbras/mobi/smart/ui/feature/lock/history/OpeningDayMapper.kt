@@ -1,6 +1,6 @@
 package intelbras.mobi.smart.ui.feature.lock.history
 
-import intelbras.mobi.smart.business.usecase.LockOpening
+import intelbras.mobi.smart.business.lock.usecase.LockOpening
 import intelbras.mobi.smart.ui.feature.lock.formatted
 import intelbras.mobi.smart.ui.feature.lock.toUiModel
 import kotlinx.datetime.DateTimeUnit

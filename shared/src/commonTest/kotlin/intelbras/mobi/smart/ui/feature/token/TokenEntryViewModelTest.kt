@@ -5,8 +5,8 @@ import dev.mokkery.everySuspend
 import dev.mokkery.matcher.any
 import dev.mokkery.mock
 import dev.mokkery.verifySuspend
-import intelbras.mobi.smart.business.SmartHomeSession
-import intelbras.mobi.smart.business.usecase.AuthenticationResult
+import intelbras.mobi.smart.business.session.SmartHomeSession
+import intelbras.mobi.smart.business.token.usecase.AuthenticationResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
