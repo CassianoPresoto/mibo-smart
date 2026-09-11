@@ -26,6 +26,14 @@ data class LiveVideoRoute(
 )
 
 @Serializable
+data class CaptureLibraryRoute(
+    val address: String,
+    val productId: String,
+    val name: String,
+    val captureId: String? = null,
+)
+
+@Serializable
 data class LockRoute(
     val address: String,
     val productId: String,

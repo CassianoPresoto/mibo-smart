@@ -1,5 +1,7 @@
 package intelbras.mobi.smart.ui.feature.video
 
+import android.view.LayoutInflater
+import android.view.TextureView
 import android.view.ViewGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -9,6 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.ui.PlayerView
 import intelbras.mobi.smart.domain.playback.VideoPlayer
+import intelbras.mobi.smart.shared.R
 
 @Composable
 actual fun rememberVideoPlayer(): VideoPlayer {
@@ -23,20 +26,26 @@ actual fun rememberVideoPlayer(): VideoPlayer {
 
 @Composable
 actual fun VideoPlayerSurface(player: VideoPlayer, modifier: Modifier) {
-    val exoPlayer = (player as? ExoPlayerVideoPlayer)?.exoPlayer ?: return
+    val videoPlayer = player as? ExoPlayerVideoPlayer ?: return
 
     AndroidView(
         modifier = modifier,
         factory = { context ->
-            PlayerView(context).apply {
-                useController = false
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                )
-            }
+            val view = LayoutInflater.from(context)
+                .inflate(R.layout.mibo_video_surface, null) as PlayerView
+            view.layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
+            view
         },
-        update = { view -> view.player = exoPlayer },
-        onRelease = { view -> view.player = null },
+        update = { view ->
+            view.player = videoPlayer.exoPlayer
+            videoPlayer.attachSurface(view.videoSurfaceView as? TextureView)
+        },
+        onRelease = { view ->
+            view.player = null
+            videoPlayer.attachSurface(null)
+        },
     )
 }

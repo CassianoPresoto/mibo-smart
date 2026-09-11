@@ -13,12 +13,15 @@ internal fun LiveVideoRoute(
     device: DeviceReference,
     deviceName: String,
     deviceModel: String,
+    onOpenCapture: (String) -> Unit,
+    onSeeAllCaptures: () -> Unit,
     onLeave: () -> Unit,
     viewModel: LiveVideoViewModel = koinViewModel(),
 ) {
     val player = rememberVideoPlayer()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val details by viewModel.details.collectAsStateWithLifecycle()
+    val captures by viewModel.captures.collectAsStateWithLifecycle()
 
     LaunchedEffect(device, player) {
         viewModel.onScreenOpened(device, player)
@@ -30,11 +33,18 @@ internal fun LiveVideoRoute(
     LiveVideoScreen(
         uiState = uiState,
         details = details,
+        captures = captures,
         player = player,
         deviceName = deviceName,
         deviceModel = deviceModel,
         deviceSerialNumber = device.serialNumber,
+        loadPreview = viewModel::previewOf,
         onRetry = viewModel::onRetry,
+        onTakePhoto = viewModel::onPhotoRequested,
+        onToggleRecording = viewModel::onRecordingToggled,
+        onNoticeShown = viewModel::onNoticeShown,
+        onCaptureClick = { capture -> onOpenCapture(capture.id) },
+        onSeeAllCaptures = onSeeAllCaptures,
         onLeave = onLeave,
     )
 }

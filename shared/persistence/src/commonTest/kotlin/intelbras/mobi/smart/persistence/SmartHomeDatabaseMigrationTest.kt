@@ -1,18 +1,32 @@
 package intelbras.mobi.smart.persistence
 
+import intelbras.mobi.smart.domain.capture.model.CameraCapture
 import intelbras.mobi.smart.domain.preferences.model.UserPreference
 import intelbras.mobi.smart.persistence.db.SmartHomeDatabase
+import intelbras.mobi.smart.persistence.capture.StoredCameraCaptures
 import intelbras.mobi.smart.persistence.preferences.StoredUserPreferences
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 
 class SmartHomeDatabaseMigrationTest {
 
     @Test
-    fun `the schema moved to the version that knows the preferences`() {
-        assertEquals(2L, SmartHomeDatabase.Schema.version)
+    fun `the schema moved to the version that knows the camera captures`() {
+        assertEquals(3L, SmartHomeDatabase.Schema.version)
+    }
+
+    @Test
+    fun `upgrading a version 2 database opens room for the camera captures`() = runTest {
+        val driver = versionTwoDriver()
+        SmartHomeDatabase.Schema.migrate(driver, oldVersion = 2, newVersion = 3)
+        val captures = StoredCameraCaptures(SmartHomeDatabase(driver), Dispatchers.Default)
+
+        captures.save(photo)
+
+        assertEquals(listOf("capture-1"), captures.capturesOf("KAYK0109140D9").first().map { it.id })
     }
 
     @Test
@@ -35,6 +49,24 @@ class SmartHomeDatabaseMigrationTest {
         SmartHomeDatabase.Schema.migrate(driver, oldVersion = 1, newVersion = 2)
 
         assertEquals(42L, database.accessTokenQueries.selectExpiration(1L).executeAsOne())
+    }
+
+    private val photo = CameraCapture.Photo(
+        id = "capture-1",
+        deviceSerialNumber = "KAYK0109140D9",
+        fileName = "foto.jpg",
+        capturedAtEpochMilliseconds = 1_724_589_000_000L,
+        sizeBytes = 838_860L,
+    )
+
+    private fun versionTwoDriver() = versionOneDriver().also { driver ->
+        driver.execute(
+            identifier = null,
+            sql = "CREATE TABLE userPreferenceEntity (" +
+                "preferenceKey TEXT NOT NULL PRIMARY KEY, " +
+                "preferenceValue TEXT NOT NULL)",
+            parameters = 0,
+        )
     }
 
     private fun versionOneDriver() = emptyDriver().also { driver ->

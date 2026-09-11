@@ -1,14 +1,26 @@
 package intelbras.mobi.smart.ui.feature.video
 
 import android.content.Context
+import android.view.TextureView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import intelbras.mobi.smart.domain.capture.LiveClipRecorder
+import intelbras.mobi.smart.domain.capture.LiveFrameCapture
+import intelbras.mobi.smart.domain.capture.model.ClipRecordingOutcome
+import intelbras.mobi.smart.domain.capture.model.ClipRecordingStart
+import intelbras.mobi.smart.domain.capture.model.FrameCaptureResult
+import intelbras.mobi.smart.domain.capture.model.MediaFileDestination
 import intelbras.mobi.smart.domain.playback.VideoPlayer
 import intelbras.mobi.smart.domain.playback.model.PlaybackFailure
 import intelbras.mobi.smart.domain.playback.model.PlaybackSource
 import intelbras.mobi.smart.domain.playback.model.VideoPlayerEvent
+import intelbras.mobi.smart.player.LiveClipSink
+import intelbras.mobi.smart.player.RecordingDataSourceFactory
+import intelbras.mobi.smart.player.VideoFrameSnapshot
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -17,7 +29,10 @@ import kotlinx.coroutines.flow.asSharedFlow
 private const val EVENT_BUFFER = 16
 private const val LAST_EVENT = 1
 
-internal class ExoPlayerVideoPlayer(context: Context) : VideoPlayer {
+internal class ExoPlayerVideoPlayer(context: Context) :
+    VideoPlayer,
+    LiveFrameCapture,
+    LiveClipRecorder {
 
     private val reported = MutableSharedFlow<VideoPlayerEvent>(
         replay = LAST_EVENT,
@@ -25,19 +40,30 @@ internal class ExoPlayerVideoPlayer(context: Context) : VideoPlayer {
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
 
+    private val clipSink = LiveClipSink()
+    private val frameSnapshot = VideoFrameSnapshot()
+    private var videoSurface: TextureView? = null
+
     override val events: Flow<VideoPlayerEvent> = reported.asSharedFlow()
 
-    val exoPlayer: ExoPlayer = ExoPlayer.Builder(context).build().apply {
-        addListener(
-            object : Player.Listener {
-                override fun onPlaybackStateChanged(state: Int) = report(state)
-
-                override fun onPlayerError(error: PlaybackException) {
-                    reported.tryEmit(VideoPlayerEvent.Failed(playbackFailureOf(error.errorCode)))
-                }
-            },
+    val exoPlayer: ExoPlayer = ExoPlayer.Builder(context)
+        .setMediaSourceFactory(
+            DefaultMediaSourceFactory(
+                RecordingDataSourceFactory(DefaultDataSource.Factory(context), clipSink),
+            ),
         )
-    }
+        .build()
+        .apply {
+            addListener(
+                object : Player.Listener {
+                    override fun onPlaybackStateChanged(state: Int) = report(state)
+
+                    override fun onPlayerError(error: PlaybackException) {
+                        reported.tryEmit(VideoPlayerEvent.Failed(playbackFailureOf(error.errorCode)))
+                    }
+                },
+            )
+        }
 
     override fun start(source: PlaybackSource) {
         reported.resetReplayCache()
@@ -54,6 +80,18 @@ internal class ExoPlayerVideoPlayer(context: Context) : VideoPlayer {
     fun release() {
         exoPlayer.release()
     }
+
+    fun attachSurface(surface: TextureView?) {
+        videoSurface = surface
+    }
+
+    override suspend fun captureFrame(destination: MediaFileDestination): FrameCaptureResult =
+        frameSnapshot.capture(videoSurface, destination)
+
+    override suspend fun startRecording(destination: MediaFileDestination): ClipRecordingStart =
+        clipSink.startRecording(destination)
+
+    override suspend fun finishRecording(): ClipRecordingOutcome = clipSink.finishRecording()
 
     private fun report(state: Int) {
         when (state) {

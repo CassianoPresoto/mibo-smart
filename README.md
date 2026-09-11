@@ -99,6 +99,17 @@ tentativa recarregando a mesma URL e as seguintes abrindo uma conexão nova, com
 elas. Ao sair, o player é parado e a sessão de streaming encerrada, mesmo quando a tela foi fechada no
 meio.
 
+As capturas da câmera ficam neste aparelho, não na plataforma. `CameraCaptures` reúne as quatro
+intenções — tirar foto, abrir e fechar um take, listar e apagar — e o que muda entre Android e iOS
+fica atrás de dois contratos do domínio (`LiveFrameCapture` e `LiveClipRecorder`) implementados pelo
+mesmo objeto que já implementa `VideoPlayer`: no Android o frame sai do `TextureView` do `PlayerView`
+e o take é um *tee* dos bytes do stream fMP4 (guarda o init segment e grava a partir do próximo
+fragmento, sem transcodificar); no iOS o VLCKit resolve os dois com `saveVideoSnapshotAt` e
+`startRecordingAtPath`. Cada plataforma devolve o nome do arquivo que realmente escreveu, e é esse
+nome que o caso de uso guarda. Os arquivos ficam na pasta privada do app (`mibo-captures`, via
+`MediaFileStore`) e a ficha de cada captura na tabela `cameraCaptureEntity`, de onde a tela do player
+e a tela de capturas leem por `Flow`.
+
 ## Rodando
 
 - App Android: `./gradlew :androidApp:assembleDebug`

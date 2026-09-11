@@ -10,12 +10,23 @@ final class VlcVideoPlayback: NSObject, NativeVideoPlayback, VLCMediaPlayerDeleg
     private var listener: NativeVideoPlaybackListener?
     private var reportedState: VLCMediaPlayerState?
     private var watcher: Timer?
+    private var pendingSnapshotPath: String?
 
     override init() {
         super.init()
         surface.backgroundColor = .black
         player.delegate = self
         player.drawable = surface
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(snapshotTaken),
+            name: VLCMediaPlayer.snapshotTakenNotification,
+            object: player
+        )
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     func view() -> UIView {
@@ -41,11 +52,39 @@ final class VlcVideoPlayback: NSObject, NativeVideoPlayback, VLCMediaPlayerDeleg
         watcher = nil
         listener = nil
         reportedState = nil
+        pendingSnapshotPath = nil
         player.stop()
+    }
+
+    func takeSnapshot(path: String) {
+        pendingSnapshotPath = path
+        player.saveVideoSnapshot(at: path, withWidth: 0, andHeight: 0)
+    }
+
+    func startRecording(directoryPath: String) {
+        player.startRecording(atPath: directoryPath)
+    }
+
+    func stopRecording() {
+        player.stopRecording()
     }
 
     func mediaPlayerStateChanged(_ newState: VLCMediaPlayerState) {
         report(newState)
+    }
+
+    func mediaPlayerStartedRecording(_ player: VLCMediaPlayer) {
+        listener?.onRecordingStarted()
+    }
+
+    func mediaPlayer(_ player: VLCMediaPlayer, recordingStoppedAt url: URL?) {
+        listener?.onRecordingStopped(path: url?.path)
+    }
+
+    @objc private func snapshotTaken() {
+        let savedPath = pendingSnapshotPath
+        pendingSnapshotPath = nil
+        listener?.onSnapshotTaken(path: savedPath)
     }
 
     private func watchState() {

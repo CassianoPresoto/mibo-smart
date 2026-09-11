@@ -30,6 +30,7 @@ kotlin {
         commonMain.dependencies {
             api(project(":shared:domain"))
             implementation(libs.sqldelight.runtime)
+            implementation(libs.sqldelight.coroutines)
             implementation(libs.koin.core)
         }
         androidMain.dependencies {

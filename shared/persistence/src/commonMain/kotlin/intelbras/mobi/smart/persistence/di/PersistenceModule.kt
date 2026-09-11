@@ -1,10 +1,13 @@
 package intelbras.mobi.smart.persistence.di
 
 import intelbras.mobi.smart.domain.auth.AccessTokenStore
+import intelbras.mobi.smart.domain.capture.CameraCaptureStore
+import intelbras.mobi.smart.domain.capture.MediaFileStore
 import intelbras.mobi.smart.domain.preferences.UserPreferenceStore
 import intelbras.mobi.smart.persistence.SmartHomePersistenceFactory
 import intelbras.mobi.smart.persistence.auth.AccessTokenSecretStore
 import intelbras.mobi.smart.persistence.auth.ProtectedAccessTokenStore
+import intelbras.mobi.smart.persistence.capture.StoredCameraCaptures
 import intelbras.mobi.smart.persistence.createSmartHomeDatabase
 import intelbras.mobi.smart.persistence.db.SmartHomeDatabase
 import intelbras.mobi.smart.persistence.preferences.StoredUserPreferences
@@ -17,4 +20,6 @@ fun persistenceModule(persistenceFactory: SmartHomePersistenceFactory): Module =
     single<AccessTokenSecretStore> { persistenceFactory.createSecretStore() }
     single<AccessTokenStore> { ProtectedAccessTokenStore(get(), get(), Dispatchers.Default) }
     single<UserPreferenceStore> { StoredUserPreferences(get(), Dispatchers.Default) }
+    single<MediaFileStore> { persistenceFactory.createMediaFileStore() }
+    single<CameraCaptureStore> { StoredCameraCaptures(get(), Dispatchers.Default) }
 }
